@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
 
+  import TerminusClient from "@terminusdb/terminusdb-client";
   import { filesystemStore, sessionStore } from '$src/stores'
   import { AREAS, galleryStore } from '$routes/gallery/stores'
   import { getImagesFromWNFS, type Image } from '$routes/gallery/lib/gallery'
@@ -46,6 +47,38 @@
     unsubscribeGalleryStore()
     unsubscribeSessionStore()
   })
+
+  let bioregion = '';
+  let ecozone = '';
+  let skills = '';
+  let interests = '';
+  let associatedOrganizations = '';
+
+  function handleSubmit() {
+    alert("submitted");
+    makeConnection();
+  }
+
+  export async function makeConnection(){
+    try{
+  const client = new TerminusClient.WOQLClient(
+              "https://cloud.terminusdb.com/Myseelia",{
+                user:"zaldarren@gmail.com",
+                organization:"Myseelia",
+                token: "dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzg5OTY0ZGI5OWFlYjQ1Zjc5OGM5ZTRiZWI2MzExOGJhZjhiOWRiOWNlOTJiNmU2NGI0NDEzZjIzNDFmOGVkMjc=_869e9bd2465ad84126151962994fcfa22d4b7ec9375edf16b4182e7f36e4b2b820075ba22e78f629e0691eddbeae6998a6504d5ce287aa1df2602cb556b58e1730b0b93feb0e9304"
+              }
+            );
+      await client.connect()
+      const schema = await client.getSchema("myseelia", "main")
+      console.log("Schema");
+      console.log(schema);
+      const entries = await client.getDocument({"graph_type":"instance","as_list":true,"type":"Entry"})
+      console.log("Entries");
+      console.log(entries);
+    }catch(err){
+        console.error(err.message)
+    }
+  }
 </script>
 
 <section class="overflow-hidden text-gray-700">
@@ -53,11 +86,36 @@
     <div
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:lg:grid-cols-6 gap-4"
     >
-      <FileUploadCard />
-      {#each $galleryStore.selectedArea === AREAS.PRIVATE ? $galleryStore.privateImages : $galleryStore.publicImages as image}
-        <ImageCard {image} openModal={setSelectedImage} />
-      {/each}
+      {#each $galleryStore.selectedArea === AREAS.PRIVATE ? $galleryStore.privateImages : $galleryStore.publicImages as image}{/each}
     </div>
+    <form on:submit|preventDefault={handleSubmit}>
+      <label>
+        Bioregion:
+        <input type="text" bind:value={bioregion} />
+      </label>
+      <br />
+      <label>
+        Ecozone:
+        <input type="text" bind:value={ecozone} />
+      </label>
+      <br />
+      <label>
+        Skills:
+        <input type="text" bind:value={skills} />
+      </label>
+      <br />
+      <label>
+        Interests:
+        <input type="text" bind:value={interests} />
+      </label>
+      <br />
+      <label>
+        Associated organizations:
+        <input type="text" bind:value={associatedOrganizations} />
+      </label>
+      <br />
+      <button type="submit">Submit</button>
+    </form>
   </div>
 
   {#if selectedImage}

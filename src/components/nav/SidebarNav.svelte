@@ -17,7 +17,7 @@
       icon: Home
     },
     {
-      label: 'Photo Gallery Demo',
+      label: 'Myseelia',
       href: '/gallery/',
       icon: PhotoGallery
     },

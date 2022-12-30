@@ -6,6 +6,7 @@
   import { AREAS, galleryStore } from '$routes/gallery/stores'
   import Dropzone from '$routes/gallery/components/upload/Dropzone.svelte'
   import ImageGallery from '$routes/gallery/components/imageGallery/ImageGallery.svelte'
+  import MyseeliaPublic from '$routes/gallery/components/imageGallery/MyseeliaPublic.svelte'
 
   /**
    * Tab between the public/private areas and load associated images
@@ -39,7 +40,7 @@
               ? 'tab-active bg-base-content text-base-100'
               : 'bg-base-100 text-base-content'}"
           >
-            {AREAS[area]} Photos
+            {AREAS[area]} Data
           </button>
         {/each}
       </div>
