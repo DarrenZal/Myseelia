@@ -3,7 +3,6 @@
   import { page } from '$app/stores'
   import { sessionStore } from '$src/stores'
   import About from '$components/icons/About.svelte'
-  import AlphaTag from '$components/nav/AlphaTag.svelte'
   import BrandLogo from '$components/icons/BrandLogo.svelte'
   import BrandWordmark from '$components/icons/BrandWordmark.svelte'
   import Home from '$components/icons/Home.svelte'
@@ -17,7 +16,7 @@
       icon: Home
     },
     {
-      label: 'Myseelia',
+      label: 'App',
       href: '/gallery/',
       icon: PhotoGallery
     },
@@ -67,7 +66,6 @@
         >
           <BrandLogo />
           <BrandWordmark />
-          <AlphaTag />
         </div>
 
         <!-- Menu -->

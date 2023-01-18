@@ -3,7 +3,6 @@
   import { page } from '$app/stores'
   import { sessionStore, themeStore } from '../stores'
   import { storeTheme, type Theme } from '$lib/theme'
-  import AlphaTag from '$components/nav/AlphaTag.svelte'
   import Avatar from '$components/settings/Avatar.svelte'
   import BrandLogo from '$components/icons/BrandLogo.svelte'
   import BrandWordmark from '$components/icons/BrandWordmark.svelte'
@@ -34,7 +33,6 @@
         on:click={() => goto('/')}
       >
         <BrandLogo />
-        <AlphaTag />
       </div>
     {/if}
   </div>
@@ -48,9 +46,6 @@
       <BrandLogo />
       <div class="hidden lg:inline-block">
         <BrandWordmark />
-      </div>
-      <div class="hidden sm:inline-block">
-        <AlphaTag />
       </div>
     </div>
   {/if}

@@ -8,7 +8,6 @@
   import FileUploadCard from '$routes/gallery/components/upload/FileUploadCard.svelte'
   import ImageCard from '$routes/gallery/components/imageGallery/ImageCard.svelte'
   import ImageModal from '$routes/gallery/components/imageGallery/ImageModal.svelte'
-
   /**
    * Open the ImageModal and pass it the selected `image` from the gallery
    * @param image
@@ -81,6 +80,26 @@
   }
 </script>
 
+<style>
+  form {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+}
+
+label {
+  text-align: left;
+}
+
+button{
+  background-color: #4CAF50; /* Green */
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+</style>
+
 <section class="overflow-hidden text-gray-700">
   <div class="pt-8 p-6 md:p-8 mx-auto">
     <div
@@ -89,32 +108,32 @@
       {#each $galleryStore.selectedArea === AREAS.PRIVATE ? $galleryStore.privateImages : $galleryStore.publicImages as image}{/each}
     </div>
     <form on:submit|preventDefault={handleSubmit}>
-      <label>
+      <label class="label dark:text-white">
         Bioregion:
         <input type="text" bind:value={bioregion} />
       </label>
       <br />
-      <label>
+      <label class="label dark:text-white">
         Ecozone:
         <input type="text" bind:value={ecozone} />
-      </label>
+      </label >
       <br />
-      <label>
+      <label class="label dark:text-white">
         Skills:
         <input type="text" bind:value={skills} />
       </label>
       <br />
-      <label>
+      <label class="label dark:text-white">
         Interests:
         <input type="text" bind:value={interests} />
       </label>
       <br />
-      <label>
+      <label class="label dark:text-white">
         Associated organizations:
         <input type="text" bind:value={associatedOrganizations} />
       </label>
       <br />
-      <button type="submit">Submit</button>
+      <button class="bg-blue-500 text-white dark:text-black" type="submit">Submit</button>
     </form>
   </div>
 
