@@ -1,13 +1,47 @@
 <script lang="ts">
   import { onDestroy } from 'svelte'
+  import { onMount } from 'svelte'
 
-  import TerminusClient from "@terminusdb/terminusdb-client";
+  import TerminusClient from "@terminusdb/terminusdb-client"
   import { filesystemStore, sessionStore } from '$src/stores'
   import { AREAS, galleryStore } from '$routes/gallery/stores'
   import { getImagesFromWNFS, type Image } from '$routes/gallery/lib/gallery'
   import FileUploadCard from '$routes/gallery/components/upload/FileUploadCard.svelte'
   import ImageCard from '$routes/gallery/components/imageGallery/ImageCard.svelte'
   import ImageModal from '$routes/gallery/components/imageGallery/ImageModal.svelte'
+
+  const client = new TerminusClient.WOQLClient(
+              "https://cloud.terminusdb.com/Myseelia",{
+                user:"zaldarren@gmail.com",
+                organization:"Myseelia",
+                db: "Myseelia",
+                token: "dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzg5OTY0ZGI5OWFlYjQ1Zjc5OGM5ZTRiZWI2MzExOGJhZjhiOWRiOWNlOTJiNmU2NGI0NDEzZjIzNDFmOGVkMjc=_869e9bd2465ad84126151962994fcfa22d4b7ec9375edf16b4182e7f36e4b2b820075ba22e78f629e0691eddbeae6998a6504d5ce287aa1df2602cb556b58e1730b0b93feb0e9304"
+              }
+            );
+
+  let username = $sessionStore.username;
+  let bioregion = '';
+  let ecozone = '';
+  let affiliatedOrganizations = "Organization/8c8368b55dc80f18ba254771701f6d1bc79a3a90f127c28b3145a2c2204e97ce";
+  let givenName = '';
+  let hasCredential = {};
+
+
+  onMount(async () => {
+    try{
+      await client.connect()
+      const schema = await client.getSchema("myseelia", "main")
+      // console.log("Schema");
+      // console.log(schema);
+      // console.log("result");
+      
+      // const result = await client.getDocument({as_list:true,type:"Person",query: { userName: "tester" }})
+      // console.log(result);
+    }catch(err){
+        console.error("this is it" + err.message)
+    }
+  });
+
   /**
    * Open the ImageModal and pass it the selected `image` from the gallery
    * @param image
@@ -47,33 +81,31 @@
     unsubscribeSessionStore()
   })
 
-  let bioregion = '';
-  let ecozone = '';
-  let skills = '';
-  let interests = '';
-  let associatedOrganizations = '';
+  
 
   function handleSubmit() {
-    alert("submitted");
     makeConnection();
   }
 
   export async function makeConnection(){
     try{
-  const client = new TerminusClient.WOQLClient(
-              "https://cloud.terminusdb.com/Myseelia",{
-                user:"zaldarren@gmail.com",
-                organization:"Myseelia",
-                token: "dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzg5OTY0ZGI5OWFlYjQ1Zjc5OGM5ZTRiZWI2MzExOGJhZjhiOWRiOWNlOTJiNmU2NGI0NDEzZjIzNDFmOGVkMjc=_869e9bd2465ad84126151962994fcfa22d4b7ec9375edf16b4182e7f36e4b2b820075ba22e78f629e0691eddbeae6998a6504d5ce287aa1df2602cb556b58e1730b0b93feb0e9304"
-              }
-            );
-      await client.connect()
-      const schema = await client.getSchema("myseelia", "main")
-      console.log("Schema");
-      console.log(schema);
-      const entries = await client.getDocument({"graph_type":"instance","as_list":true,"type":"Entry"})
-      console.log("Entries");
-      console.log(entries);
+      const entryObj = 
+    {
+        "@type" : "Person",
+        "userName"    : username,
+        "givenName"    : givenName,
+        "bioregion": bioregion,
+        "ecozone": ecozone,
+        "hasCredential": hasCredential,
+        "affiliation": affiliatedOrganizations
+    };
+    if (username == entryObj.userName){
+        await client.updateDocument(entryObj)
+      } else{
+        await client.addDocument(entryObj);
+      }
+      const entries2 = await client.getDocument({"graph_type":"instance","as_list":true,"type":"Person"})
+      console.log(entries2);
     }catch(err){
         console.error(err.message)
     }
@@ -88,6 +120,11 @@
 
 label {
   text-align: left;
+}
+
+input{
+  background-color: rgb(255, 255, 255);
+  border-radius: 4px;
 }
 
 button{
@@ -109,28 +146,28 @@ button{
     </div>
     <form on:submit|preventDefault={handleSubmit}>
       <label class="label dark:text-white">
+        Given Name:
+        <input class="input text-white dark:text-black" type="text" bind:value={givenName} />
+      </label>
+      <br />
+      <label class="label dark:text-white">
         Bioregion:
-        <input type="text" bind:value={bioregion} />
+        <input class="input text-white dark:text-black" type="text" bind:value={bioregion} />
       </label>
       <br />
       <label class="label dark:text-white">
         Ecozone:
-        <input type="text" bind:value={ecozone} />
+        <input class="input text-white dark:text-black" type="text" bind:value={ecozone} />
       </label >
       <br />
       <label class="label dark:text-white">
-        Skills:
-        <input type="text" bind:value={skills} />
-      </label>
+        Has Credential:
+        <input class="input text-white dark:text-black" type="text" bind:value={hasCredential} />
+      </label >
       <br />
       <label class="label dark:text-white">
-        Interests:
-        <input type="text" bind:value={interests} />
-      </label>
-      <br />
-      <label class="label dark:text-white">
-        Associated organizations:
-        <input type="text" bind:value={associatedOrganizations} />
+        Affiliated organizations: 
+        <input class="input text-white dark:text-black" type="text" bind:value={affiliatedOrganizations}/>
       </label>
       <br />
       <button class="bg-blue-500 text-white dark:text-black" type="submit">Submit</button>
