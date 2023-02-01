@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "module": "es2020",
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true,    // that is probably the important one
+    "esModuleInterop": true,                 // this also
+    "typeRoots": [
+      "./node_modules/@types/"
+    ],
+    "module": "esnext",
     "lib": ["es2020"],
     "target": "es2019",
     /**
@@ -16,7 +22,6 @@
     enable source maps by default.
     */
     "sourceMap": true,
-    "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",

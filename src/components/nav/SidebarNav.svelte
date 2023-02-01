@@ -21,6 +21,11 @@
       icon: PhotoGallery
     },
     {
+      label: 'Explore',
+      href: '/explore/',
+      icon: PhotoGallery
+    },
+    {
       label: 'About This Template',
       href: '/about/',
       icon: About
