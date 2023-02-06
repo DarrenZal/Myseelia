@@ -1,0 +1,6 @@
+{
+    "database": "playground3",
+    "endpoint": "https://cloud.terminusdb.com/Myseelia/",
+    "team": "Myseelia",
+    "use JWT token": true
+}

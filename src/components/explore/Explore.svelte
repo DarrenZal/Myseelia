@@ -1,6 +1,7 @@
 <script lang="ts">
   import cytoscape from 'cytoscape'
   import { onMount } from 'svelte'
+  import { bubble } from 'svelte/internal'
 
   let cy
   let cyDiv
@@ -23,135 +24,18 @@
   interface IEdge {
     data: IEdgeData
   }
+  
 
-  let knowledgeGraphJson: any = {
-    entities: [
-      {
-        label: 'Organization',
-        title: 'Neuralink'
-      },
-      {
-        label: 'Organization',
-        title: 'SpaceX'
-      },
-      {
-        label: 'Organization',
-        title: 'Pretoria'
-      },
-      {
-        label: 'Organization',
-        title: 'The Boring Company'
-      },
-      {
-        label: 'Organization',
-        title: 'University of Pretoria'
-      },
-      {
-        label: 'Organization',
-        title: 'Stanford University'
-      },
-      {
-        label: 'Person',
-        title: 'Jeff Bezos'
-      },
-      {
-        label: 'Organization',
-        title: 'University of Pennsylvania'
-      },
-      {
-        label: 'Person',
-        title: 'Kimbal Musk'
-      },
-      {
-        label: 'Organization',
-        title: 'Tesla, Inc.'
-      },
-      {
-        label: 'Person',
-        title: 'Elon Musk'
-      }
-    ],
-    relations: [
-      {
-        source: 'Elon Musk',
-        target: 'Neuralink'
-      },
-      {
-        source: 'Tesla, Inc.',
-        target: 'Elon Musk',
-        type: 'owned by'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'University of Pennsylvania',
-        type: 'residence'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'Tesla, Inc.',
-        type: 'owned by'
-      },
-      {
-        source: 'The Boring Company',
-        target: 'Tesla, Inc.',
-        type: 'owned by'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'Kimbal Musk',
-        type: 'sibling'
-      },
-      {
-        source: 'University of Pennsylvania',
-        target: 'Elon Musk',
-        type: 'residence'
-      },
-      {
-        source: 'The Boring Company',
-        target: 'Neuralink',
-        type: 'subsidiary'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'University of Pretoria',
-        type: 'work location'
-      },
-      {
-        source: 'The Boring Company',
-        target: 'Elon Musk',
-        type: 'owned by'
-      },
-      {
-        source: 'Kimbal Musk',
-        target: 'Elon Musk',
-        type: 'sibling'
-      },
-      {
-        source: 'Neuralink',
-        target: 'Elon Musk',
-        type: 'owned by'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'The Boring Company',
-        type: 'owned by'
-      },
-      {
-        source: 'Elon Musk',
-        target: 'University of Pennsylvania',
-        type: 'work location'
-      }
-    ]
-  }
+  
+  import json_graph from './knowledge_graph.json';
 
-//   async function fetchData() {
-//     const response = await fetch('./data.json')
-//     if (response.ok) {
+  let knowledgeGraphJson: any = json_graph;
+
 //       knowledgeGraphJson = await response.json()
-//     } else {
-//       alert(`HTTP-Error: ${response.status}`)
-//     }
-//   }
+  //     } else {
+  //       alert(`HTTP-Error: ${response.status}`)
+  //     }
+  //   }
 
   let nodes: INode[] = []
   let edges: IEdge[] = []
@@ -159,7 +43,7 @@
   onMount(async () => {
     //await fetchData();
     nodes = knowledgeGraphJson.entities.map((entity: any) => ({
-      data: { id: entity.title }
+      data: { id: entity.id, label: entity.label }
     }))
 
     edges = knowledgeGraphJson.relations.map(
@@ -185,19 +69,31 @@
           style: {
             'text-valign': 'center',
             'text-halign': 'center',
-            label: 'data(id)',
-            width: 100,
-            height: 100
+            'text-wrap': 'wrap',
+            "text-max-width": function(ele){ return Math.max(1, Math.ceil(ele.degree()/2)) * 30; },
+            "font-size": function(ele){ return Math.max(1, Math.ceil(ele.degree()/2)) * 6; },
+            'background-color': "#75f6df",
+            'border-color': "#223152",
+            'border-width': function(ele){ return Math.max(1, Math.ceil(ele.degree()/2)); },
+            label: 'data(label)',
+            width: function(ele){ return Math.max(1, Math.ceil(ele.degree()/2)) * 40; },
+            height: function(ele){ return Math.max(1, Math.ceil(ele.degree()/2)) * 40; }
           }
         },
         {
           selector: 'edge',
           style: {
+            "font-size": 20,
             width: 5,
-            'line-color': 'light grey',
-            'target-arrow-color': 'grey',
+            'line-color': "#223152",
+            'target-arrow-color': "#223152",
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
+            "text-rotation": "autorotate",
+            'text-offset': { x: 20, y: -20 },
+            'text-background-opacity': 1,
+            'text-background-color': '#fafafa',
+            'text-background-shape': 'roundrectangle',
             label: 'data(label)'
           }
         }
@@ -208,13 +104,52 @@
       }
     })
 
-    cy.on('tap', 'node', event => {
-      const node = event.target
-      const nodeId = node.data('id')
-      alert('Display info for ' + nodeId)
-    })
+    let toggle = true;
+ 
 
-	cy.on('tap', 'edge', event => {
+    // cy.off('tap', 'node', event => {
+    //       const node = event.target;
+    //       const nodeId = node.data('id');
+    //       alert('unDisplay info for ' + nodeId);
+    // });
+    
+
+    
+ 
+
+    cy.on('tap', 'node', function(evt){
+  var node = evt.target;
+  var connectedEdges = node.connectedEdges();
+  var connectedNodes = node.neighborhood().nodes();
+  var allElements = cy.elements();
+  var allNodes = cy.nodes();
+  var allEdges = cy.edges();
+  
+  if (node.style("display") == "element") {
+    // hide all nodes and edges except the selected node and its neighbors
+    allNodes.style("display", "none");
+    allEdges.style("display", "none");
+    connectedNodes.style("display", "element");
+    node.style("display", "element");
+    connectedEdges.style("display", "element");
+  } else {
+    // show all nodes and edges
+    allNodes.style("display", "element");
+    allEdges.style("display", "element");
+  }
+});
+
+// Reset the state when clicking away from the node
+cy.on('tap', function(e){
+  if (e.target === cy) {
+    cy.nodes().style('display', 'element');
+    cy.edges().style('display', 'element');
+    cy.nodes().data('highlighted', false);
+  }
+});
+
+
+    cy.on('tap', 'edge', event => {
       const edge = event.target
       const edgeId = edge.data('id')
       alert('Display info for ' + edgeId)
