@@ -1,3 +1,4 @@
+import json
 ####
 # This is the script for storing the schema of your TerminusDB
 # database for your project.
@@ -56,6 +57,7 @@ class Blockchain(EnumTemplate):
     ZeroCarbon = ()
     Topl = ()
     HBAR = ()
+
 class Organization(DocumentTemplate):
     """
 
@@ -208,3 +210,4 @@ class Topic(EnumTemplate):
     Other = ()
     IoT = ()
     EcoLiving = ()
+

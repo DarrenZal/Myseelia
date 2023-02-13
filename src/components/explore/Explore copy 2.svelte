@@ -4,7 +4,6 @@
   import { bubble } from 'svelte/internal'
   import TerminusClient from '@terminusdb/terminusdb-client'
   import { MeiliSearch } from 'meilisearch'
-  import { generateKnowledgeGraph } from './cytoscape.ts'
 
   let cy
 
@@ -41,6 +40,7 @@
   let edges: IEdge[] = []
 
   onMount(async () => {
+    //await fetchData();
     nodes = knowledgeGraphJson.entities.map((entity: any) => ({
       data: { id: entity.id, label: entity.label }
     }))
@@ -126,7 +126,7 @@
 
     var top100 = nodes.slice(0, 1000)
 
-    //console.log(top100)
+    console.log(top100);
 
     cy.nodes().forEach(function (node) {
       if (!top100.includes(node)) {
@@ -195,6 +195,7 @@
   }
 
   async function entered(e) {
+    alert(e.target.value.toString())
     const searchclient = new MeiliSearch({
       host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
       apiKey: '117c691a34b21a6651798479ebffd181eb276958'
@@ -205,36 +206,9 @@
     // const searchResult = await index.search('orgs', {
     //   attributesToRetrieve: ['id']
     // })
-    const searchResult = await index.search(e.target.value.toString(), {
-      attributesToRetrieve: ['id']
-    })
+    const searchResult = await index.search(e.target.value.toString());
 
-    // need to turn the search results into an array of ids which can be used to query the knowledge graph
-    const resultsgraph = await generateKnowledgeGraph(searchResult.hits).then(
-      resultsgraph => {
-        const allNodes = resultsgraph.entities.map((entity: any) => ({
-          data: { id: entity.id, label: entity.label }
-        }))
-
-        const allEdges = resultsgraph.relations.map(
-          (relation: any, index: string) => ({
-            data: {
-              id: index,
-              source: relation.source,
-              target: relation.target,
-              label: relation.type
-            }
-          })
-        )
-        cy.remove(cy.elements())
-        cy.add(allNodes)
-        cy.add(allEdges)
-        cy.layout({
-  name: 'cose',
-  // other layout options here
-}).run();
-      }
-    )
+    console.log(searchResult)
     // var node = cy.nodes().filter(function (ele) {
     //   return ele.data('id') == "Organization/" + searchResult.hits[0].id
     // })
@@ -283,26 +257,26 @@
     }
 
     // let v = WOQL.vars('person_id', 'impactarea', '@schema:checked');
-    // const WOQL = TerminusClient.WOQL
-    // const query = WOQL.triple(
-    //   'v:OrganizationID',
-    //   'name',
-    //   WOQL.string('Sustainable Impact Token')
-    // )
+    const WOQL = TerminusClient.WOQL
+    const query = WOQL.triple(
+      'v:OrganizationID',
+      'name',
+      WOQL.string('Sustainable Impact Token')
+    )
 
-    // const query3 = WOQL.and(
-    //   WOQL.triple('v:NodeID', 'property_name', WOQL.like(`%${keyword}%`)),
-    //   WOQL.triple('v:NodeID', 'property_name', 'v:Value')
-    // )
+    const query3 = WOQL.and(
+      WOQL.triple('v:NodeID', 'property_name', WOQL.like(`%${keyword}%`)),
+      WOQL.triple('v:NodeID', 'property_name', 'v:Value')
+    )
 
-    // const result = await client.getDocument({
-    //   as_list: true,
-    //   type: 'Organization',
-    //   query: { name: 'Sustainable Impact Token' }
-    // })
-    // console.log('result ', result)
-    // const results = await client.query(query)
-    // console.log('Query Documents using WOQL: ', results.bindings)
+    const result = await client.getDocument({
+      as_list: true,
+      type: 'Organization',
+      query: { name: 'Sustainable Impact Token' }
+    })
+    console.log('result ', result)
+    const results = await client.query(query)
+    console.log('Query Documents using WOQL: ', results.bindings)
   }
 </script>
 
