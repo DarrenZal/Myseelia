@@ -28,18 +28,8 @@
 
 
   onMount(async () => {
-    try{
       await client.connect()
       const schema = await client.getSchema("myseelia", "main")
-      // console.log("Schema");
-      // console.log(schema);
-      // console.log("result");
-      
-      // const result = await client.getDocument({as_list:true,type:"Person",query: { userName: "tester" }})
-      // console.log(result);
-    }catch(err){
-        console.error("this is it" + err.message)
-    }
   });
 
   /**

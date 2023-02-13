@@ -194,7 +194,7 @@
     // Perform search in real timebased on searchTerm here
   }
 
-  async function entered(e) {
+  ;(async function entered(e) {
     const searchclient = new MeiliSearch({
       host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
       apiKey: '117c691a34b21a6651798479ebffd181eb276958'
@@ -230,9 +230,9 @@
         cy.add(allNodes)
         cy.add(allEdges)
         cy.layout({
-  name: 'cose',
-  // other layout options here
-}).run();
+          name: 'cose'
+          // other layout options here
+        }).run()
       }
     )
     // var node = cy.nodes().filter(function (ele) {
@@ -271,16 +271,7 @@
           'dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzJkMDU4N2IwYjgzMzhmODdjMjc0ZDdiNmM1MzgwNjFmYTYyMmZkOTcyZTc3NjI1NzIyYjY3MTllYTE3NmQxYjE=_bd6f9c37d87abcaf0c16b7a68335b31010c8dd04aac0b07bf0f31676af131888666200aac080e72cdc746197334eac4f52d821c90652b5611784878afabe1267535cbd896a00a396'
       }
     )
-    try {
-      await client.connect()
-      //console.log(schema);
-      // console.log("result");
-
-      // const result = await client.getDocument({as_list:true,type:"Person",query: { userName: "tester" }})
-      // console.log(result);
-    } catch (err) {
-      console.error('this is it' + err.message)
-    }
+    await client.connect()
 
     // let v = WOQL.vars('person_id', 'impactarea', '@schema:checked');
     // const WOQL = TerminusClient.WOQL
@@ -303,7 +294,7 @@
     // console.log('result ', result)
     // const results = await client.query(query)
     // console.log('Query Documents using WOQL: ', results.bindings)
-  }
+  })()
 </script>
 
 <div class="pt-8 p-6 md:p-8 mx-auto">

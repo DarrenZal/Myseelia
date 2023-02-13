@@ -3,30 +3,20 @@ import TerminusClient from '@terminusdb/terminusdb-client'
 
 import * as fs from 'fs'
 
-const client = new TerminusClient.WOQLClient(
-  'https://cloud.terminusdb.com/Myseelia/',
-  {
-    user: 'zaldarren@gmail.com',
-    organization: 'Myseelia',
-    db: 'play',
-    token:
-      'dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzJkMDU4N2IwYjgzMzhmODdjMjc0ZDdiNmM1MzgwNjFmYTYyMmZkOTcyZTc3NjI1NzIyYjY3MTllYTE3NmQxYjE=_bd6f9c37d87abcaf0c16b7a68335b31010c8dd04aac0b07bf0f31676af131888666200aac080e72cdc746197334eac4f52d821c90652b5611784878afabe1267535cbd896a00a396'
-  }
-)
-try {
-  await client.connect()
-  //console.log(schema);
-  // console.log("result");
-
-  // const result = await client.getDocument({as_list:true,type:"Person",query: { userName: "tester" }})
-  // console.log(result);
-} catch (err) {
-  console.error('this is it' + err.message)
-}
-
 const WOQL = TerminusClient.WOQL
 
 export async function generateKnowledgeGraph(ids: unknown[]): Promise<object> {
+  const client = new TerminusClient.WOQLClient(
+    'https://cloud.terminusdb.com/Myseelia/',
+    {
+      user: 'zaldarren@gmail.com',
+      organization: 'Myseelia',
+      db: 'play',
+      token:
+        'dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzJkMDU4N2IwYjgzMzhmODdjMjc0ZDdiNmM1MzgwNjFmYTYyMmZkOTcyZTc3NjI1NzIyYjY3MTllYTE3NmQxYjE=_bd6f9c37d87abcaf0c16b7a68335b31010c8dd04aac0b07bf0f31676af131888666200aac080e72cdc746197334eac4f52d821c90652b5611784878afabe1267535cbd896a00a396'
+    }
+  )
+    await client.connect()
   const results: unknown[] = []
   const entities: { id: string; label: string; type: string }[] = []
   const relations: { source: string; target: string; type: string }[] = []
