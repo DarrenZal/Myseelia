@@ -27,6 +27,9 @@
     data: IEdgeData
   }
 
+  //This was generate with ./json_graph.py
+  //When a user searches, it regenerates the cytoscape graph using the Meilisearch index.  
+  //To Do: incorporate actualy TerminusDB queries
   import json_graph from './knowledge_graph.json'
 
   let knowledgeGraphJson: any = json_graph
