@@ -190,8 +190,6 @@
     //   attributesToRetrieve: ['id']
     // })
     const searchResult = await index.search(e.target.value.toString())
-console.log(searchResult.hits)
-    // need to turn the search results into an array of ids which can be used to query the knowledge graph
     const resultsgraph = await generateKnowledgeGraph(searchResult.hits).then(
       resultsgraph => {
         
