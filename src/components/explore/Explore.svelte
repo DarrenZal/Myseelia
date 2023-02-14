@@ -136,12 +136,6 @@
 
     let toggle = true
 
-    // cy.off('tap', 'node', event => {
-    //       const node = event.target;
-    //       const nodeId = node.data('id');
-    //       alert('unDisplay info for ' + nodeId);
-    // });
-
     cy.on('tap', 'node', function (evt) {
       var node = evt.target
       var connectedEdges = node.connectedEdges()
@@ -179,13 +173,6 @@
       alert('Display info for ' + edgeId)
     })
 
-    //   cy.on('tap', 'node', function(){
-    //   alert("put code here"));
-    //   });
-
-    //   cy.layout({
-    //     name: 'cola'
-    //   }).run();
   })
 
   var searchTerm = ''
@@ -234,65 +221,18 @@ console.log(searchResult.hits)
         }).run()
       }
     )
-    // var node = cy.nodes().filter(function (ele) {
-    //   return ele.data('id') == "Organization/" + searchResult.hits[0].id
-    // })
-    // console.log(node);
-    //   var connectedEdges = node.connectedEdges()
-    //   var connectedNodes = node.neighborhood().nodes()
-    //   var allElements = cy.elements()
-    //   var allNodes = cy.nodes()
-    //   var allEdges = cy.edges()
 
-    //   if (node.style('display') == 'element') {
-    //     console.log("a");
-    //     // hide all nodes and edges except the selected node and its neighbors
-    //     allNodes.style('display', 'none')
-    //     allEdges.style('display', 'none')
-    //     connectedNodes.style('display', 'element')
-    //     node.style('display', 'element')
-    //     connectedEdges.style('display', 'element')
-    //   } else {
-    //     console.log("b");
-    //     // show all nodes and edges
-    //     allNodes.style('display', 'element')
-    //     allEdges.style('display', 'element')
-    //   }
-
-    // Perform search in real time based on searchTerm here
     const client = new TerminusClient.WOQLClient(
-      'https://cloud.terminusdb.com/Myseelia/',
+      'https://cloud.terminusdb.com/...',
       {
-        user: 'zaldarren@gmail.com',
-        organization: 'Myseelia',
-        db: 'playground3',
+        user: '',
+        organization: '',
+        db: '',
         token:
           ''
       }
     )
       await client.connect()
-
-    // let v = WOQL.vars('person_id', 'impactarea', '@schema:checked');
-    // const WOQL = TerminusClient.WOQL
-    // const query = WOQL.triple(
-    //   'v:OrganizationID',
-    //   'name',
-    //   WOQL.string('Sustainable Impact Token')
-    // )
-
-    // const query3 = WOQL.and(
-    //   WOQL.triple('v:NodeID', 'property_name', WOQL.like(`%${keyword}%`)),
-    //   WOQL.triple('v:NodeID', 'property_name', 'v:Value')
-    // )
-
-    // const result = await client.getDocument({
-    //   as_list: true,
-    //   type: 'Organization',
-    //   query: { name: 'Sustainable Impact Token' }
-    // })
-    // console.log('result ', result)
-    // const results = await client.query(query)
-    // console.log('Query Documents using WOQL: ', results.bindings)
   }
 </script>
 
