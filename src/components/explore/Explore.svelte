@@ -30,13 +30,7 @@
   import json_graph from './knowledge_graph.json'
 
   let knowledgeGraphJson: any = json_graph
-
-  //       knowledgeGraphJson = await response.json()
-  //     } else {
-  //       alert(`HTTP-Error: ${response.status}`)
-  //     }
-  //   }
-
+  
   let nodes: INode[] = []
   let edges: IEdge[] = []
 
