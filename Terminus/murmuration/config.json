@@ -1,0 +1,6 @@
+{
+    "database": "murmurations",
+    "endpoint": "https://cloud.terminusdb.com/Myseelia/",
+    "team": "Myseelia",
+    "use JWT token": true
+}

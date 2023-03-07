@@ -26,6 +26,11 @@
       icon: PhotoGallery
     },
     {
+      label: 'CTA',
+      href: '/cta/',
+      icon: PhotoGallery
+    },
+    {
       label: 'About This Template',
       href: '/about/',
       icon: About
