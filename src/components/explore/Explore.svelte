@@ -27,16 +27,13 @@
     data: IEdgeData
   }
 
+  //This was generate with ./json_graph.py
+  //When a user searches, it regenerates the cytoscape graph using the Meilisearch index.  
+  //To Do: incorporate actualy TerminusDB queries
   import json_graph from './knowledge_graph.json'
 
   let knowledgeGraphJson: any = json_graph
-
-  //       knowledgeGraphJson = await response.json()
-  //     } else {
-  //       alert(`HTTP-Error: ${response.status}`)
-  //     }
-  //   }
-
+  
   let nodes: INode[] = []
   let edges: IEdge[] = []
 
@@ -136,12 +133,6 @@
 
     let toggle = true
 
-    // cy.off('tap', 'node', event => {
-    //       const node = event.target;
-    //       const nodeId = node.data('id');
-    //       alert('unDisplay info for ' + nodeId);
-    // });
-
     cy.on('tap', 'node', function (evt) {
       var node = evt.target
       var connectedEdges = node.connectedEdges()
@@ -179,13 +170,6 @@
       alert('Display info for ' + edgeId)
     })
 
-    //   cy.on('tap', 'node', function(){
-    //   alert("put code here"));
-    //   });
-
-    //   cy.layout({
-    //     name: 'cola'
-    //   }).run();
   })
 
   var searchTerm = ''
@@ -196,8 +180,8 @@
 
   async function entered(e) {
     const searchclient = new MeiliSearch({
-      host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
-      apiKey: '117c691a34b21a6651798479ebffd181eb276958'
+      host: '',
+      apiKey: ''
     })
     const index = searchclient.index('orgs')
     // this will search both keys and values
@@ -206,8 +190,6 @@
     //   attributesToRetrieve: ['id']
     // })
     const searchResult = await index.search(e.target.value.toString())
-console.log(searchResult.hits)
-    // need to turn the search results into an array of ids which can be used to query the knowledge graph
     const resultsgraph = await generateKnowledgeGraph(searchResult.hits).then(
       resultsgraph => {
         
@@ -234,65 +216,18 @@ console.log(searchResult.hits)
         }).run()
       }
     )
-    // var node = cy.nodes().filter(function (ele) {
-    //   return ele.data('id') == "Organization/" + searchResult.hits[0].id
-    // })
-    // console.log(node);
-    //   var connectedEdges = node.connectedEdges()
-    //   var connectedNodes = node.neighborhood().nodes()
-    //   var allElements = cy.elements()
-    //   var allNodes = cy.nodes()
-    //   var allEdges = cy.edges()
 
-    //   if (node.style('display') == 'element') {
-    //     console.log("a");
-    //     // hide all nodes and edges except the selected node and its neighbors
-    //     allNodes.style('display', 'none')
-    //     allEdges.style('display', 'none')
-    //     connectedNodes.style('display', 'element')
-    //     node.style('display', 'element')
-    //     connectedEdges.style('display', 'element')
-    //   } else {
-    //     console.log("b");
-    //     // show all nodes and edges
-    //     allNodes.style('display', 'element')
-    //     allEdges.style('display', 'element')
-    //   }
-
-    // Perform search in real time based on searchTerm here
     const client = new TerminusClient.WOQLClient(
-      'https://cloud.terminusdb.com/Myseelia/',
+      'https://cloud.terminusdb.com/...',
       {
-        user: 'zaldarren@gmail.com',
-        organization: 'Myseelia',
-        db: 'playground3',
+        user: '',
+        organization: '',
+        db: '',
         token:
-          'dGVybWludXNkYjovLy9kYXRhL2tleXNfYXBpLzJkMDU4N2IwYjgzMzhmODdjMjc0ZDdiNmM1MzgwNjFmYTYyMmZkOTcyZTc3NjI1NzIyYjY3MTllYTE3NmQxYjE=_bd6f9c37d87abcaf0c16b7a68335b31010c8dd04aac0b07bf0f31676af131888666200aac080e72cdc746197334eac4f52d821c90652b5611784878afabe1267535cbd896a00a396'
+          ''
       }
     )
       await client.connect()
-
-    // let v = WOQL.vars('person_id', 'impactarea', '@schema:checked');
-    // const WOQL = TerminusClient.WOQL
-    // const query = WOQL.triple(
-    //   'v:OrganizationID',
-    //   'name',
-    //   WOQL.string('Sustainable Impact Token')
-    // )
-
-    // const query3 = WOQL.and(
-    //   WOQL.triple('v:NodeID', 'property_name', WOQL.like(`%${keyword}%`)),
-    //   WOQL.triple('v:NodeID', 'property_name', 'v:Value')
-    // )
-
-    // const result = await client.getDocument({
-    //   as_list: true,
-    //   type: 'Organization',
-    //   query: { name: 'Sustainable Impact Token' }
-    // })
-    // console.log('result ', result)
-    // const results = await client.query(query)
-    // console.log('Query Documents using WOQL: ', results.bindings)
   }
 </script>
 
