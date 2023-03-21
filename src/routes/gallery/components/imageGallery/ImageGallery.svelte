@@ -43,7 +43,7 @@ type KeyValuePair = [string, unknown];
   let Name = '';
   let hasCredential = {};
   let cid
-  let primary_url, profileImage, Description
+  let primary_url, profileImage, Description, terminusID
 
   onMount(async () => {
       await client.connect()
@@ -66,7 +66,7 @@ type KeyValuePair = [string, unknown];
         const jsonObjects = await getJSONFromWNFS()
         console.log("jsonObjects", jsonObjects)
         // Find the JSON object with the username "tester"
-        const usernameJSONObject = jsonObjects.find(obj => obj.name === 'tester')
+        const usernameJSONObject = jsonObjects.find(obj => obj.name === username)
 
         // Log the CID of the "username.json" file to the console
         cid = usernameJSONObject ? usernameJSONObject.cid : null
@@ -156,7 +156,7 @@ type KeyValuePair = [string, unknown];
         const jsonObjects = await getJSONFromWNFS()
         console.log(jsonObjects)
         // Find the JSON object with the username "tester"
-        const usernameJSONObject = jsonObjects.find(obj => obj.name === 'tester')
+        const usernameJSONObject = jsonObjects.find(obj => obj.name === username)
 
         // Log the CID of the "username.json" file to the console
         cid = usernameJSONObject ? usernameJSONObject.cid : null
@@ -214,31 +214,36 @@ type KeyValuePair = [string, unknown];
         console.log("added document", result)
         const addedID = extractPersonId(String(result))
         const queryTemplate = { "@id": addedID }
-const terminusperson = await client.getDocument({ type: 'person', as_list: true, query: queryTemplate });
-console.log("result   ", terminusperson);
-const real_id: string = terminusperson[0]['@id'];
-const num_id: string = real_id.split('/').pop() || '';
+        const terminusperson = await client.getDocument({ type: 'person', as_list: true, query: queryTemplate });
+        console.log("result   ", terminusperson);
+        const real_id: string = terminusperson[0]['@id'];
+        terminusID = real_id
+        console.log("terminusID", terminusID)
+        const num_id: string = real_id.split('/').pop() || '';
 
-// Create a new object without the '@id' key
-const newDocument: Document = Object.entries(terminusperson[0])
-  .filter(([key]) => key !== '@id')
-  .reduce<Document>((acc, [key, value]: KeyValuePair) => {
-    acc[key] = value;
-    return acc;
-  }, {});
+        // Create a new object without the '@id' key
+        const newDocument: Document = Object.entries(terminusperson[0])
+          .filter(([key]) => key !== '@id')
+          .reduce<Document>((acc, [key, value]: KeyValuePair) => {
+            acc[key] = value;
+            return acc;
+          }, {});
 
-// Update the document with the new 'id'
-newDocument['id'] = num_id;
+        // Update the document with the new 'id'
+        newDocument['id'] = num_id;
 
-const newDocumentsArray = [newDocument];
+        const newDocumentsArray = [newDocument];
 
-const searchResult = await index.addDocuments(newDocumentsArray);
-      console.log("searchResult", searchResult)
+        const searchResult = await index.addDocuments(newDocumentsArray);
+        console.log("searchResult", searchResult)
       } else{
         console.log('adding doc')
         const addedPerson = await client.addDocument(entryObj);
         console.log("added document", addedPerson)
         addNotification(`profile has been added to knowledge graph`, 'success')
+        const addedID = extractPersonId(String(addedPerson))
+        terminusID = addedID
+        console.log("terminusID", terminusID)
       }
       const entries2 = await client.getDocument({"graph_type":"instance","as_list":true,"type":"person"})
       console.log(entries2);
@@ -259,6 +264,12 @@ const searchResult = await index.addDocuments(newDocumentsArray);
         cid = usernameJSONObject ? usernameJSONObject.cid : null
         } catch (error) {
           console.error(error)
+        }
+        console.log("deleting", terminusID);
+
+        const deleted = await client.deleteDocument({id:terminusID});
+        if (deleted){
+          addNotification(`profile has been deleted from knowledge graph`, 'success')
         }
   }
 </script>
