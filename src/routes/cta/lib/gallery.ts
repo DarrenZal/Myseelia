@@ -47,7 +47,7 @@ const FILE_SIZE_LIMIT = 5
 /**
  * Get images from the user's WNFS and construct the `src` value for the images
  */
-export const getImagesFromWNFS: () => Promise<void> = async () => {
+export const getJSONFromWNFS: () => Promise<void> = async () => {
   try {
     // Set loading: true on the galleryStore
     galleryStore.update(store => ({ ...store, loading: true }))
@@ -182,7 +182,7 @@ export const deleteImageFromWNFS: (
       addNotification(`${name} image has been deleted`, 'success')
 
       // Refetch images and update galleryStore
-      await getImagesFromWNFS()
+      await getJSONFromWNFS()
     } else {
       throw new Error(`${name} image has already been deleted`)
     }
@@ -205,5 +205,5 @@ export const handleFileInput: (
   )
 
   // Refetch images and update galleryStore
-  await getImagesFromWNFS()
+  await getJSONFromWNFS()
 }

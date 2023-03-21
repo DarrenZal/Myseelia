@@ -1,13 +1,20 @@
 import { get as getStore } from 'svelte/store'
 import * as wn from 'webnative'
 import * as uint8arrays from 'uint8arrays'
-import type { CID } from 'multiformats/cid'
+import { CID } from 'multiformats/cid'
 import type { PuttableUnixTree, File as WNFile } from 'webnative/fs/types'
 import type { Metadata } from 'webnative/fs/metadata'
 
-import { filesystemStore } from '$src/stores'
+import { filesystemStore, sessionStore } from '$src/stores'
 import { AREAS, galleryStore } from '$routes/gallery/stores'
 import { addNotification } from '$lib/notifications'
+
+let username: string | null = null
+
+// Subscribe to changes in the session store
+sessionStore.subscribe(session => {
+  username = session.username
+})
 
 export type Image = {
   cid: string
@@ -45,112 +52,105 @@ export const GALLERY_DIRS = {
 const FILE_SIZE_LIMIT = 5
 
 /**
- * Get images from the user's WNFS and construct the `src` value for the images
+ * Get JSON objects from the user's WNFS and return them as an array
  */
-export const getImagesFromWNFS: () => Promise<void> = async () => {
+export const getJSONFromWNFS: () => Promise<Array<Record<string, any>>> = async () => {
   try {
     // Set loading: true on the galleryStore
     galleryStore.update(store => ({ ...store, loading: true }))
 
     const { selectedArea } = getStore(galleryStore)
-    const isPrivate = selectedArea === AREAS.PRIVATE
     const fs = getStore(filesystemStore)
 
-    // Set path to either private or public gallery dir
+    // Set path to gallery dir
     const path = wn.path.directory(...GALLERY_DIRS[selectedArea])
 
     // Get list of links for files in the gallery dir
     const links = await fs.ls(path)
+    console.log('links', links)
+  
+    let cid
+    Object.keys(links).forEach(name => {
+      const link = links[name]
+      console.log(link.cid.toString())
+      if (link.toString() == 'tester.json') {
+        cid = link.cid.toString()
+      }
+    })
+  
 
-    const images = await Promise.all(
-      Object.entries(links).map(async ([name]) => {
+    const jsonObjects = await Promise.all(
+      Object.entries(links).map(async ([name, link]) => {
         const file = await fs.get(
           wn.path.file(...GALLERY_DIRS[selectedArea], `${name}`)
         )
 
-        // The CID for private files is currently located in `file.header.content`,
-        // whereas the CID for public files is located in `file.cid`
-        const cid = isPrivate
-          ? (file as GalleryFile).header.content.toString()
-          : (file as GalleryFile).cid.toString()
+        // The content of the file is a JSON-formatted string
+        const jsonString = uint8arrays.toString((file as GalleryFile).content, 'utf8')
 
-        // Create a base64 string to use as the image `src`
-        const src = `data:image/jpeg;base64, ${uint8arrays.toString(
-          (file as GalleryFile).content,
-          'base64'
-        )}`
+        // Parse the JSON-formatted string into a JavaScript object
+        const jsonObject = JSON.parse(jsonString)
 
-        return {
-          cid,
-          ctime: (file as GalleryFile).header.metadata.unixMeta.ctime,
-          name,
-          private: isPrivate,
-          size: (links[name] as Link).size,
-          src
-        }
+        // Get the CID for the current link and append it to the corresponding JSON object
+        const cid = link.cid.toString()
+        jsonObject.cid = cid
+        console.log(jsonObject)
+
+        return jsonObject
       })
     )
 
-    // Sort images by ctime(created at date)
+    // Sort JSON objects by ctime(created at date)
     // NOTE: this will eventually be controlled via the UI
-    images.sort((a, b) => b.ctime - a.ctime)
+    jsonObjects.sort((a, b) => b.ctime - a.ctime)
 
-    // Push images to the galleryStore
-    galleryStore.update(store => ({
-      ...store,
-      ...(isPrivate
-        ? {
-            privateImages: images
-          }
-        : {
-            publicImages: images
-          }),
-      loading: false
-    }))
+    // Set loading: false and return the JSON objects
+    galleryStore.update(store => ({ ...store, loading: false }))
+    return jsonObjects
   } catch (error) {
     console.error(error)
-    galleryStore.update(store => ({
-      ...store,
-      loading: false
-    }))
+    galleryStore.update(store => ({ ...store, loading: false }))
+    return []
   }
 }
 
 /**
- * Upload an image to the user's private or public WNFS
- * @param image
+ * Upload a JSON object to the user's private or public WNFS
+ * @param json
  */
-export const uploadImageToWNFS: (
-  image: File
-) => Promise<void> = async image => {
+export const uploadJSONToWNFS: (
+  json: Record<string, any>
+) => Promise<void> = async json => {
   try {
     const { selectedArea } = getStore(galleryStore)
     const fs = getStore(filesystemStore)
 
-    // Reject files over 5MB
-    const imageSizeInMB = image.size / (1024 * 1024)
-    if (imageSizeInMB > FILE_SIZE_LIMIT) {
-      throw new Error('Image can be no larger than 5MB')
+    // Convert the JSON object to a string
+    const jsonString = JSON.stringify(json)
+
+    // Reject strings over 5MB
+    const stringSizeInMB = new globalThis.Blob([jsonString]).size / (1024 * 1024)
+    if (stringSizeInMB > FILE_SIZE_LIMIT) {
+      throw new Error('JSON object can be no larger than 5MB')
     }
 
-    // Reject the upload if the image already exists in the directory
-    const imageExists = await fs.exists(
-      wn.path.file(...GALLERY_DIRS[selectedArea], image.name)
-    )
-    if (imageExists) {
-      throw new Error(`${image.name} image already exists`)
-    }
+    // Reject the upload if the file already exists in the directory
+    // const fileExists = await fs.exists(
+    //   wn.path.file(...GALLERY_DIRS[selectedArea], `${username}.json`)
+    // )
+    // if (fileExists) {
+    //   throw new Error(`${username}.json file already exists`)
+    // }
 
-    // Create a sub directory and add some content
+    // Create a sub directory and add the JSON string as a file
     await fs.write(
-      wn.path.file(...GALLERY_DIRS[selectedArea], image.name),
-      image
+      wn.path.file(...GALLERY_DIRS[selectedArea], `${username}.json`),
+      new globalThis.Blob([jsonString], { type: 'application/json' })
     )
 
     // Announce the changes to the server
     await fs.publish()
-
-    addNotification(`${image.name} image has been published`, 'success')
+    addNotification(`${username}.json file has been published`, 'success')
   } catch (error) {
     addNotification(error.message, 'error')
     console.error(error)
@@ -182,7 +182,7 @@ export const deleteImageFromWNFS: (
       addNotification(`${name} image has been deleted`, 'success')
 
       // Refetch images and update galleryStore
-      await getImagesFromWNFS()
+      await getJSONFromWNFS()
     } else {
       throw new Error(`${name} image has already been deleted`)
     }
@@ -193,6 +193,42 @@ export const deleteImageFromWNFS: (
 }
 
 /**
+ * Delete all JSON files from the user's private or public WNFS
+ */
+export const deleteAllJSONFromWNFS: () => Promise<void> = async () => {
+  try {
+    const { selectedArea } = getStore(galleryStore)
+    const fs = getStore(filesystemStore)
+    // Retrieve all JSON files in the selected directory
+    const fileList = await fs.ls(wn.path.directory(...GALLERY_DIRS[selectedArea]))
+    // Filter JSON files
+    const jsonFiles = Object.keys(fileList).filter(key => key.endsWith('.json'))
+
+    if (jsonFiles.length > 0) {
+      // Remove JSON files from the server
+      for (const fileName of jsonFiles) {
+        console.log(fileName)
+        await fs.rm(wn.path.file(...GALLERY_DIRS[selectedArea], fileName))
+      }
+
+      // Announce the changes to the server
+      await fs.publish()
+
+      addNotification(`Data has been deleted from IPFS`, 'success')
+
+      // Refetch JSON files and update galleryStore
+      await getJSONFromWNFS()
+    } else {
+      throw new Error(`No JSON files found to delete`)
+    }
+  } catch (error) {
+    addNotification(error.message, 'error')
+    console.error(error)
+  }
+}
+
+
+/**
  * Handle uploads made by interacting with the file input directly
  */
 export const handleFileInput: (
@@ -200,10 +236,10 @@ export const handleFileInput: (
 ) => Promise<void> = async files => {
   await Promise.all(
     Array.from(files).map(async file => {
-      await uploadImageToWNFS(file)
+      await uploadJSONToWNFS(file)
     })
   )
 
   // Refetch images and update galleryStore
-  await getImagesFromWNFS()
+  await getJSONFromWNFS()
 }

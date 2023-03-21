@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
-    getImagesFromWNFS,
-    uploadImageToWNFS
+    getJSONFromWNFS,
+    uploadJSONToWNFS
   } from '$routes/gallery/lib/gallery'
   import { addNotification } from '$lib/notifications'
 
@@ -33,14 +33,14 @@
             addNotification('Please upload images only', 'error')
             console.error('Please upload images only')
           } else {
-            await uploadImageToWNFS(file)
+            await uploadJSONToWNFS(file)
           }
         }
       })
     )
 
     // Refetch images and update galleryStore
-    await getImagesFromWNFS()
+    await getJSONFromWNFS()
 
     // Disable isDragging state
     isDragging = false

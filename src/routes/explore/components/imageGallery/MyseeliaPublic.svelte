@@ -4,7 +4,7 @@
 
   import { filesystemStore, sessionStore } from '$src/stores'
   import { AREAS, galleryStore } from '$routes/gallery/stores'
-  import { getImagesFromWNFS, type Image } from '$routes/gallery/lib/gallery'
+  import { getJSONFromWNFS, type Image } from '$routes/gallery/lib/gallery'
   import FileUploadCard from '$routes/gallery/components/upload/FileUploadCard.svelte'
   import ImageCard from '$routes/gallery/components/imageGallery/ImageCard.svelte'
   import ImageModal from '$routes/gallery/components/imageGallery/ImageModal.svelte'  
@@ -17,7 +17,7 @@
   const setSelectedImage: (image: Image) => void = image =>
     (selectedImage = image)
 
-  // If galleryStore.selectedArea changes from private to public, re-run getImagesFromWNFS
+  // If galleryStore.selectedArea changes from private to public, re-run getJSONFromWNFS
   let selectedArea = null
   const unsubscribeGalleryStore = galleryStore.subscribe(async updatedStore => {
     // Get initial selectedArea
@@ -36,7 +36,7 @@
     if (newState.authed && $filesystemStore && !imagesFetched) {
       imagesFetched = true
       // Get images from the user's public WNFS
-      getImagesFromWNFS()
+      getImagesFrgetJSONFromWNFSomWNFS()
     }
   })
 

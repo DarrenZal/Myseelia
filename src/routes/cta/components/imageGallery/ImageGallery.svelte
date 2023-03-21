@@ -5,10 +5,11 @@
   import TerminusClient from "@terminusdb/terminusdb-client"
   import { filesystemStore, sessionStore } from '$src/stores'
   import { AREAS, galleryStore } from '$routes/gallery/stores'
-  import { getImagesFromWNFS, type Image } from '$routes/gallery/lib/gallery'
+  import { getJSONFromWNFS, type Image } from '$routes/gallery/lib/gallery'
   import FileUploadCard from '$routes/gallery/components/upload/FileUploadCard.svelte'
   import ImageCard from '$routes/gallery/components/imageGallery/ImageCard.svelte'
   import ImageModal from '$routes/gallery/components/imageGallery/ImageModal.svelte'
+  import { ipfsGatewayUrl } from '$lib/app-info';
 
   const client = new TerminusClient.WOQLClient(
               "https://cloud.terminusdb.com/Myseelia",{
@@ -42,7 +43,7 @@
 
   const clearSelectedImage = () => (selectedImage = null)
 
-  // If galleryStore.selectedArea changes from private to public, re-run getImagesFromWNFS
+  // If galleryStore.selectedArea changes from private to public, re-run getJSONFromWNFS
   let selectedArea = null
   const unsubscribeGalleryStore = galleryStore.subscribe(async updatedStore => {
     // Get initial selectedArea
@@ -52,7 +53,7 @@
 
     if (selectedArea !== updatedStore.selectedArea) {
       selectedArea = updatedStore.selectedArea
-      await getImagesFromWNFS()
+      await getJSONFromWNFS()
     }
   })
 
@@ -62,7 +63,7 @@
     if (newState.authed && $filesystemStore && !imagesFetched) {
       imagesFetched = true
       // Get images from the user's public WNFS
-      getImagesFromWNFS()
+      getJSONFromWNFS()
     }
   })
 
@@ -162,6 +163,13 @@ button{
       <br />
       <button class="bg-blue-500 text-white dark:text-black" type="submit">Submit</button>
     </form>
+    <!-- <a
+            href={`https://ipfs.${ipfsGatewayUrl}/ipfs/${image.cid}/userland`}
+            target="_blank"
+            class="underline mb-4 hover:text-slate-500"
+          >
+            View on IPFS
+    </a> -->
   </div>
 
   {#if selectedImage}

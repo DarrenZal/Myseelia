@@ -27,13 +27,16 @@
     data: IEdgeData
   }
 
-  //This was generate with ./json_graph.py
-  //When a user searches, it regenerates the cytoscape graph using the Meilisearch index.  
-  //To Do: incorporate actualy TerminusDB queries
   import json_graph from './knowledge_graph.json'
 
   let knowledgeGraphJson: any = json_graph
-  
+
+  //       knowledgeGraphJson = await response.json()
+  //     } else {
+  //       alert(`HTTP-Error: ${response.status}`)
+  //     }
+  //   }
+
   let nodes: INode[] = []
   let edges: IEdge[] = []
 
@@ -133,6 +136,12 @@
 
     let toggle = true
 
+    // cy.off('tap', 'node', event => {
+    //       const node = event.target;
+    //       const nodeId = node.data('id');
+    //       alert('unDisplay info for ' + nodeId);
+    // });
+
     cy.on('tap', 'node', function (evt) {
       var node = evt.target
       var connectedEdges = node.connectedEdges()
@@ -170,6 +179,13 @@
       alert('Display info for ' + edgeId)
     })
 
+    //   cy.on('tap', 'node', function(){
+    //   alert("put code here"));
+    //   });
+
+    //   cy.layout({
+    //     name: 'cola'
+    //   }).run();
   })
 
   var searchTerm = ''
@@ -180,19 +196,20 @@
 
   async function entered(e) {
     const searchclient = new MeiliSearch({
-      host: '',
-      apiKey: ''
+      host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
+      apiKey: '117c691a34b21a6651798479ebffd181eb276958'
     })
-    const index = searchclient.index('orgs')
+    const index = searchclient.index('people')
     // this will search both keys and values
     // const search = await index.search(e.target.value.toString(), { q: '*' });
     // const searchResult = await index.search('orgs', {
     //   attributesToRetrieve: ['id']
     // })
     const searchResult = await index.search(e.target.value.toString())
+    // need to turn the search results into an array of ids which can be used to query the knowledge graph
     const resultsgraph = await generateKnowledgeGraph(searchResult.hits).then(
       resultsgraph => {
-        
+        // console.log(resultsgraph)
         const allNodes = resultsgraph.entities.map((entity: any) => ({
           data: { id: entity.id, label: entity.label }
         }))
@@ -216,18 +233,6 @@
         }).run()
       }
     )
-
-    const client = new TerminusClient.WOQLClient(
-      'https://cloud.terminusdb.com/...',
-      {
-        user: '',
-        organization: '',
-        db: '',
-        token:
-          ''
-      }
-    )
-      await client.connect()
   }
 </script>
 
@@ -256,7 +261,6 @@
     top: 10px;
     z-index: 100;
     background-color: white;
-    color: black;
     width: 50%;
     height: 40px;
     border-radius: 20px;

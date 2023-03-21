@@ -41,20 +41,6 @@
   let edges: IEdge[] = []
 
   onMount(async () => {
-    nodes = knowledgeGraphJson.entities.map((entity: any) => ({
-      data: { id: entity.id, label: entity.label }
-    }))
-
-    edges = knowledgeGraphJson.relations.map(
-      (relation: any, index: string) => ({
-        data: {
-          id: index,
-          source: relation.source,
-          target: relation.target,
-          label: relation.type
-        }
-      })
-    )
 
     cy = cytoscape({
       container: document.getElementById('cy'),
@@ -112,6 +98,51 @@
         // infinite: true,
       }
     })
+
+    const searchclient = new MeiliSearch({
+      host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
+      apiKey: '117c691a34b21a6651798479ebffd181eb276958'
+    })
+    const index = searchclient.index('people')
+    // this will search both keys and values
+    // const search = await index.search(e.target.value.toString(), { q: '*' });
+    // const searchResult = await index.search('orgs', {
+    //   attributesToRetrieve: ['id']
+    // })
+    const searchResult = await index.getDocuments(
+      {
+        limit: 1000
+      }
+    )
+    console.log(searchResult)
+    // need to turn the search results into an array of ids which can be used to query the knowledge graph
+    const resultsgraph = await generateKnowledgeGraph(searchResult.results).then(
+      resultsgraph => {
+
+       console.log(resultsgraph)
+        const allNodes = resultsgraph.entities.map((entity: any) => ({
+          data: { id: entity.id, label: entity.label }
+        }))
+
+        const allEdges = resultsgraph.relations.map(
+          (relation: any, index: string) => ({
+            data: {
+              id: index,
+              source: relation.source,
+              target: relation.target,
+              label: relation.type
+            }
+          })
+        )
+        cy.remove(cy.elements())
+        cy.add(allNodes)
+        cy.add(allEdges)
+        cy.layout({
+          name: 'cose'
+          // other layout options here
+        }).run()
+      }
+    )
 
     cy.nodes().forEach(function (node) {
       node.data({
