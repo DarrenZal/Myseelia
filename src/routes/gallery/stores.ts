@@ -4,7 +4,8 @@ import type { Writable } from 'svelte/store'
 import type { Gallery } from '$routes/gallery/lib/gallery'
 
 export enum AREAS {
-  PUBLIC = 'Public',
+  PUBLIC = 'Personal Profile',
+  ORGS = 'Organizations',
   PRIVATE = 'Private'
 }
 

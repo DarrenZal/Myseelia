@@ -39,7 +39,7 @@ type Link = {
 }
 
 export const GALLERY_DIRS = {
-  [AREAS.PUBLIC]: ['public', 'gallery'],
+  [AREAS.PUBLIC]: ['test', 'gallery'],
   [AREAS.PRIVATE]: ['private', 'gallery']
 }
 const FILE_SIZE_LIMIT = 5

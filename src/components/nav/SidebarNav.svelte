@@ -21,15 +21,20 @@
       icon: PhotoGallery
     },
     {
-      label: 'Explore',
+      label: 'Network Map',
       href: '/explore/',
       icon: PhotoGallery
     },
     {
-      label: 'CTA',
-      href: '/cta/',
+      label: 'Geo Map',
+      href: '/geomap/',
       icon: PhotoGallery
     },
+    // {
+    //   label: 'CTA',
+    //   href: '/cta/',
+    //   icon: PhotoGallery
+    // },
     {
       label: 'About This Template',
       href: '/about/',

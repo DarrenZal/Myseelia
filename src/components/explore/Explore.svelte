@@ -180,8 +180,8 @@
 
   async function entered(e) {
     const searchclient = new MeiliSearch({
-      host: '',
-      apiKey: ''
+      host: 'https://ms-9ea4a96f02a8-1969.sfo.meilisearch.io',
+      apiKey: '0a8740824e654411836da7ce15c4465996da8dfa9b2d68f603b50f9c80dc60b4'
     })
     const index = searchclient.index('orgs')
     // this will search both keys and values
@@ -217,21 +217,10 @@
       }
     )
 
-    const client = new TerminusClient.WOQLClient(
-      'https://cloud.terminusdb.com/...',
-      {
-        user: '',
-        organization: '',
-        db: '',
-        token:
-          ''
-      }
-    )
-      await client.connect()
   }
 </script>
 
-<div class="pt-8 p-6 md:p-8 mx-auto">
+<div class="flex justify-center items-center h-screen">
   <input
     id="search"
     type="text"
@@ -252,16 +241,16 @@
 
 <style>
   #search {
-    position: absolute;
-    top: 10px;
-    z-index: 100;
-    background-color: white;
-    color: black;
-    width: 50%;
-    height: 40px;
-    border-radius: 20px;
-    padding: 10px 20px 10px 40px;
-  }
+  position: absolute;
+  top: 10px;
+  z-index: 100;
+  background-color: white;
+  color: black;
+  width: 50%;
+  height: 40px;
+  border-radius: 20px;
+  padding: 10px 20px 10px 40px;
+}
 
   #search input[type='text'] {
     position: absolute;
