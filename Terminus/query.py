@@ -9,9 +9,13 @@ from terminusdb_client.woqldataframe import result_to_df
 client = WOQLClient("https://cloud.terminusdb.com/Myseelia/")
 client.connect(db="playground", team="Myseelia", use_token=True)
 
-team_it_raw = client.query_document({"@type": "Organization", "@id": "NaN"})
+team_it_raw = client.query_document({"@type": "Organization"})
 
 team_it = result_to_df(team_it_raw)
 
 
 print(team_it)
+
+# write a graphQL query to get all the organizations that have a web3 field value of "Token"
+
+

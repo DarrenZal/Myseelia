@@ -255,7 +255,6 @@
   #search input[type='text'] {
     position: absolute;
     top: 0px;
-    left: 50px;
     width: 80%;
     height: 100%;
     border: none;

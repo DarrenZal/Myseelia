@@ -8,6 +8,8 @@
   import Home from '$components/icons/Home.svelte'
   import PhotoGallery from '$components/icons/PhotoGallery.svelte'
   import Settings from '$components/icons/Settings.svelte'
+  import InfoThinIcon from '$components/icons/InfoThinIcon.svelte'
+  import Share from '$components/icons/Share.svelte'
 
   const navItems = [
     {
@@ -16,7 +18,12 @@
       icon: Home
     },
     {
-      label: 'App',
+      label: 'Chat',
+      href: '/Chat',
+      icon: Share
+    },
+    /* {
+      label: 'Profile',
       href: '/gallery/',
       icon: PhotoGallery
     },
@@ -29,7 +36,7 @@
       label: 'Geo Map',
       href: '/geomap/',
       icon: PhotoGallery
-    },
+    }, */
     // {
     //   label: 'CTA',
     //   href: '/cta/',
