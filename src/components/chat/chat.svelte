@@ -1,87 +1,107 @@
 <script lang="ts">
-  import { writable } from 'svelte/store';
-  import axios from 'axios';
+  import { writable } from 'svelte/store'
+  import axios from 'axios'
 
-  const messages = writable([]);
-  let newMessage = '';
-  let isLoading = writable(false); // To track loading state
-
-  async function processResponse() {
-    try {
-        const response = await axios.post('https://myseelia.life/query', { question: newMessage });
-        console.log("Response:", response.data);
-
-        messages.update(m => [...m, `Result: ${response.data.result}`]);
-    } catch (error) {
-        console.error("Error processing prompt:", error);
-        messages.update(m => [...m, `Error: Could not process prompt.`]);
-    }
-  }
-
-  async function processEntityMatchResponse() {
-      try {
-          const entityMatchResponse = await axios.post('https://myseelia.life/EntityMatchAnswer', { question: newMessage });
-          console.log("Entity Matching Response:", entityMatchResponse.data);
-
-          const entityMatchingResultText = entityMatchResponse.data.response.choices[0].message.content;
-          messages.update(m => [...m, `Entity Matching Result: ${entityMatchingResultText}`]);
-      } catch (error) {
-          console.error("Error processing Entity Match query:", error);
-          messages.update(m => [...m, `Error: Could not process Entity Match query.`]);
-      }
-  }
+  const messages = writable([])
+  let newMessage = ''
+  let isLoading = writable(false) // To track loading state
+  let results = '' // Declare results here with initial empty string
 
   async function sendMessage() {
-  if (newMessage.trim() !== '') {
-    messages.update(m => [...m, `Query: ${newMessage}`]);
-    isLoading.set(true);
+    if (newMessage.trim() !== '') {
+      messages.update(m => [...m, `Query: ${newMessage}`])
+      isLoading.set(true)
 
-    // Extract chat history for sending to the backend
-    let chatHistory = $messages.map(msg => {
-      return { role: msg.startsWith('Query:') ? 'user' : 'assistant', content: msg };
-    });
+      let chatHistory = []
 
-    // Send both the new message and the chat history
-    const response = await axios.post('https://myseelia.life/query', { question: newMessage, history: chatHistory });
-    console.log("Response:", response.data);
+      // Ensure there are at least two messages (a query and a response)
+      /* if ($messages.length >= 2) {
+        // Extract the last query and response (excluding the current query)
+        const lastQueryIndex = $messages.length - 2
+        chatHistory = $messages
+          .slice(lastQueryIndex - 1, lastQueryIndex + 1)
+          .map(msg => {
+            return {
+              role: msg.startsWith('Query:') ? 'user' : 'assistant',
+              content: msg.replace(/^Query: |^Result: /, '')
+            }
+          })
+      } */
 
-    messages.update(m => [...m, `Result: ${response.data.result}`]);
+      // Send both the new message and the correct chat history
+      const response = await axios.post('https://myseelia.life/query', {
+        question: newMessage,
+        history: chatHistory
+      })
+      console.log('Response:', response.data)
 
-    newMessage = '';
-    isLoading.set(false);
+      let resultText = ''
+
+      // Check if there is a result and then process the Text part
+      if (response.data.result) {
+        if (response.data.result.Text) {
+          resultText = response.data.result.Text
+          // Check if resultText is an object with a nested Text field
+          if (typeof resultText === 'object' && resultText.Text) {
+            resultText = resultText.Text
+          }
+        }
+
+        // Append Details to the result text if available
+        if (
+          response.data.result.Details &&
+          response.data.result.Details.length > 0
+        ) {
+          const detailsText = response.data.result.Details.join('')
+          resultText += (resultText ? '<br>' : '') + detailsText
+        }
+      }
+
+      // Update messages or show 'No response received' if resultText is still empty
+      if (!resultText) {
+        messages.update(m => [...m, 'Result: No response received'])
+      } else {
+        messages.update(m => [...m, `Result: ${resultText}`]) // Removed @html here
+      }
+
+      newMessage = ''
+      isLoading.set(false)
+    }
   }
-}
 
   function formatResultItem(item) {
-    let formattedItem = [];
+    let formattedItem = []
     for (const key in item) {
       if (item.hasOwnProperty(key)) {
-        let value = item[key].replace(/\"/g, ''); // Removing quotes if present
-        formattedItem.push(`${key}: ${value}`);
+        let value = item[key].replace(/\"/g, '') // Removing quotes if present
+        formattedItem.push(`${key}: ${value}`)
       }
     }
-    return formattedItem.join(', ');
+    return formattedItem.join(', ')
   }
 
   function handleKeydown(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      sendMessage();
+      event.preventDefault()
+      sendMessage()
     }
   }
 
   function getMessageType(message) {
-    if (message.startsWith('Query:')) return 'query';
-    if (message.startsWith('SPARQL Result:')) return 'sparql-result';
-    if (message.startsWith('Entity Matching Result:')) return 'entity-matching-result';
-    return 'other';
+    if (message.startsWith('Query:')) return 'query'
+    if (message.startsWith('SPARQL Result:')) return 'sparql-result'
+    if (message.startsWith('Entity Matching Result:'))
+      return 'entity-matching-result'
+    return 'other'
   }
 </script>
 
 <section class="chat-container">
   <div class="messages">
     {#each $messages as message}
-      <div class={`message ${getMessageType(message)}`}>{message}</div>
+      <div class={`message ${getMessageType(message)}`}>
+        {@html message} <!-- Use @html here -->
+      </div>
     {/each}
   </div>
   <div class="input-container">
