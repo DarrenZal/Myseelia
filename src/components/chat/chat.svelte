@@ -97,6 +97,21 @@
       return 'entity-matching-result'
     return 'other'
   }
+
+  let feedbackMessage = '';
+
+async function sendFeedback() {
+  if (feedbackMessage.trim() !== '') {
+    // Send feedback to the server
+    await axios.post('https://myseelia.life/feedback', {
+      username: username,
+      feedback: feedbackMessage
+    });
+
+    // Reset feedbackMessage
+    feedbackMessage = '';
+  }
+}
 </script>
 
 <section class="chat-container">
@@ -123,6 +138,10 @@
     {/if}
   </div>
 </section>
+<div class="feedback-container">
+  <textarea placeholder="Leave your feedback..." bind:value={feedbackMessage} rows="3"></textarea>
+  <button on:click={sendFeedback}>Submit Feedback</button>
+</div>
 
 <style>
   .chat-container {
@@ -167,4 +186,21 @@
     font-size: 16px;
     color: #888888;
   }
+  .feedback-container {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+}
+.feedback-container textarea {
+  width: 80%;
+  margin-right: 10px;
+  font-size: 16px;
+  padding: 10px;
+}
+.feedback-container button {
+  width: 15%;
+  height: 50px;
+  font-size: 16px;
+  padding: 5px 10px;
+}
 </style>
