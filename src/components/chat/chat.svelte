@@ -1,7 +1,9 @@
 <script lang="ts">
   import { writable } from 'svelte/store'
   import axios from 'axios'
+  import { sessionStore } from '$src/stores'
 
+  let username = $sessionStore.username;
   const messages = writable([])
   let newMessage = ''
   let isLoading = writable(false) // To track loading state
@@ -31,8 +33,9 @@
       // Send both the new message and the correct chat history
       const response = await axios.post('https://myseelia.life/query', {
         question: newMessage,
-        history: chatHistory
-      })
+        history: chatHistory,
+        username: username // Send username
+    });
       console.log('Response:', response.data)
 
       let resultText = ''

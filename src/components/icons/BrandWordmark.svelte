@@ -5,4 +5,4 @@
     padding: 10px;
 }
 </style>
-<div class="wordmark" dark:text-white>Myseelia</div>
+<div class="wordmark" dark:text-white>ReFiChat</div>
