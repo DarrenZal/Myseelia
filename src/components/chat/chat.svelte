@@ -114,6 +114,7 @@ async function sendFeedback() {
 }
 </script>
 
+{#if username}
 <section class="chat-container">
   <div class="messages">
     {#each $messages as message}
@@ -142,6 +143,12 @@ async function sendFeedback() {
   <textarea placeholder="Leave your feedback..." bind:value={feedbackMessage} rows="3"></textarea>
   <button on:click={sendFeedback}>Submit Feedback</button>
 </div>
+{:else}
+<!-- Prompt to Connect and Create Username -->
+<div class="connect-prompt">
+  <p>Please connect to create a username before chatting.</p>
+</div>
+{/if}
 
 <style>
   .chat-container {
@@ -203,4 +210,9 @@ async function sendFeedback() {
   font-size: 16px;
   padding: 5px 10px;
 }
+.connect-prompt {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 18px;
+  }
 </style>
