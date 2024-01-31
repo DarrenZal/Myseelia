@@ -3,7 +3,17 @@
   import axios from 'axios'
   import { sessionStore } from '$src/stores'
 
-  let username = $sessionStore.username;
+  // Initialize username as 'guest' by default
+  let username = 'guest';
+
+  // Reactive statement to update username if sessionStore changes
+  $: {
+    if ($sessionStore.username) {
+      username = $sessionStore.username;
+    } else {
+      username = 'guest';
+    }
+  }
   const messages = writable([])
   let newMessage = ''
   let isLoading = writable(false) // To track loading state
@@ -16,26 +26,12 @@
 
       let chatHistory = []
 
-      // Ensure there are at least two messages (a query and a response)
-      /* if ($messages.length >= 2) {
-        // Extract the last query and response (excluding the current query)
-        const lastQueryIndex = $messages.length - 2
-        chatHistory = $messages
-          .slice(lastQueryIndex - 1, lastQueryIndex + 1)
-          .map(msg => {
-            return {
-              role: msg.startsWith('Query:') ? 'user' : 'assistant',
-              content: msg.replace(/^Query: |^Result: /, '')
-            }
-          })
-      } */
-
       // Send both the new message and the correct chat history
       const response = await axios.post('https://myseelia.life/query', {
         question: newMessage,
         history: chatHistory,
         username: username // Send username
-    });
+      })
       console.log('Response:', response.data)
 
       let resultText = ''
@@ -98,90 +94,80 @@
     return 'other'
   }
 
-  let feedbackMessage = '';
+  let feedbackMessage = ''
 
-async function sendFeedback() {
-  if (feedbackMessage.trim() !== '') {
-    // Send feedback to the server
-    await axios.post('https://myseelia.life/feedback', {
-      username: username,
-      feedback: feedbackMessage
-    });
+  async function sendFeedback() {
+    if (feedbackMessage.trim() !== '') {
+      // Send feedback to the server
+      await axios.post('https://myseelia.life/feedback', {
+        username: username,
+        feedback: feedbackMessage
+      })
 
-    // Reset feedbackMessage
-    feedbackMessage = '';
+      // Reset feedbackMessage
+      feedbackMessage = ''
+    }
   }
-}
+
+  function autoExpand(event) {
+    const textarea = event.target
+    textarea.style.height = 'auto' // Reset the height
+    textarea.style.height = textarea.scrollHeight + 'px' // Set the height to match scroll height
+  }
 </script>
 
-{#if username}
-<section class="chat-container">
-  <div class="messages">
-    {#each $messages as message}
-      <div class={`message ${getMessageType(message)}`}>
-        {@html message} <!-- Use @html here -->
-      </div>
-    {/each}
-  </div>
-  <div class="input-container">
+<!-- {#if username} -->
+  <section class="chat-container">
+    <div class="messages dark:text-white">
+      {#each $messages as message}
+        <div class={`message ${getMessageType(message)}`}>
+          {@html message}
+          <!-- Use @html here -->
+        </div>
+      {/each}
+    </div>
+    <div class="input-container">
+      <textarea
+        class="input auto-expand"
+        placeholder="Type a message..."
+        bind:value={newMessage}
+        on:keydown={handleKeydown}
+        on:input={autoExpand}
+        rows="3"
+        disabled={$isLoading}
+      />
+      <button on:click={sendMessage} disabled={$isLoading}>
+        {#if $isLoading}Loading...{:else}Send{/if}
+      </button>
+      {#if $isLoading}
+        <div class="loading">Processing...</div>
+      {/if}
+    </div>
+  </section>
+  <div class="feedback-container">
     <textarea
-      placeholder="Type a message..."
-      bind:value={newMessage}
-      on:keydown={handleKeydown}
+      class="input"
+      placeholder="Leave your feedback..."
+      bind:value={feedbackMessage}
       rows="3"
-      disabled={$isLoading}
-    ></textarea>
-    <button on:click={sendMessage} disabled={$isLoading}>
-      {#if $isLoading}Loading...{:else}Send{/if}
-    </button>
-    {#if $isLoading}
-      <div class="loading">Processing...</div>
-    {/if}
+    />
+    <button on:click={sendFeedback}>Submit Feedback</button>
   </div>
-</section>
-<div class="feedback-container">
-  <textarea placeholder="Leave your feedback..." bind:value={feedbackMessage} rows="3"></textarea>
-  <button on:click={sendFeedback}>Submit Feedback</button>
-</div>
-{:else}
-<!-- Prompt to Connect and Create Username -->
-<div class="connect-prompt">
-  <p>Please connect to create a username before chatting.</p>
-</div>
-{/if}
+<!-- {:else}
+  <div class="connect-prompt">
+    <p>Please connect to create a username before chatting.</p>
+  </div>
+{/if} -->
 
 <style>
-  .chat-container {
-    margin-bottom: 20px; /* Adds buffer of white space */
-  }
   .messages {
-    /* Styles for the messages container */
-  }
-  .message {
-    /* Styles for individual messages */
-  }
-  .message.query {
-    color: #0000ff; /* Blue color for Query */
-  }
-
-  .message.sparql-result {
-    color: #008000; /* Green color for SPARQL result */
-  }
-
-  .message.entity-matching-result {
-    color: #0f2857; /* Orange color for Entity Matching Result */
+    margin-bottom: 20px; /* Adds buffer of white space */
   }
   .input-container {
     /* Styles for the input area */
     display: flex;
     align-items: center;
     padding-bottom: 20px; /* Adds buffer of white space at the bottom */
-  }
-  .input-container textarea {
-    width: 80%; /* Adjust as needed */
-    margin-right: 10px;
-    font-size: 16px; /* Larger font size */
-    padding: 10px;
   }
   .input-container button {
     width: 15%; /* Adjust as needed */
@@ -194,25 +180,45 @@ async function sendFeedback() {
     color: #888888;
   }
   .feedback-container {
-  display: flex;
-  align-items: center;
-  margin-top: 20px;
-}
-.feedback-container textarea {
-  width: 80%;
-  margin-right: 10px;
-  font-size: 16px;
-  padding: 10px;
-}
-.feedback-container button {
-  width: 15%;
-  height: 50px;
-  font-size: 16px;
-  padding: 5px 10px;
-}
-.connect-prompt {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+  }
+  .feedback-container textarea,
+  .input-container textarea {
+    width: 80%;
+    margin-right: 10px;
+    font-size: 16px;
+    padding: 10px;
+    overflow-y: hidden; /* Prevent scrollbar */
+    resize: none; /* Disable manual resize */
+    height: auto; /* Set initial height to auto */
+    min-height: 50px; /* Minimum height */
+  }
+  .feedback-container button {
+    width: 15%;
+    height: 50px;
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+  .connect-prompt {
     margin-top: 20px;
     text-align: center;
     font-size: 18px;
+  }
+  input {
+    background-color: rgb(255, 255, 255);
+  }
+  /* Add a class to handle the auto-expanding feature */
+  .auto-expand {
+    overflow-y: hidden;
+  }
+
+  /* JavaScript will adjust this height as the user types */
+  .auto-expand::after {
+    content: attr(data-replicated-value) ' ';
+    white-space: pre-wrap;
+    display: block;
+    visibility: hidden;
   }
 </style>

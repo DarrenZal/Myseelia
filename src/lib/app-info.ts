@@ -1,4 +1,4 @@
-export const appName = 'Myseelia'
+export const appName = 'ReFiChat'
 export const appDescription = 'Knowledge Network for Collective Intelligence.'
 export const appURL = 'https://webnative.netlify.app'
 export const appImageURL = `${appURL}/preview.png`

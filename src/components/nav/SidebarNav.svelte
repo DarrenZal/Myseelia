@@ -9,7 +9,7 @@
   import PhotoGallery from '$components/icons/PhotoGallery.svelte'
   import Settings from '$components/icons/Settings.svelte'
   import InfoThinIcon from '$components/icons/InfoThinIcon.svelte'
-  import Share from '$components/icons/Share.svelte'
+  import Chat from '$components/icons/Chat.svelte'
 
   const navItems = [
     {
@@ -20,7 +20,7 @@
     {
       label: 'Chat',
       href: '/Chat',
-      icon: Share
+      icon: Chat
     },
     /* {
       label: 'Profile',
@@ -43,7 +43,7 @@
     //   icon: PhotoGallery
     // },
     {
-      label: 'About This Template',
+      label: 'About This App',
       href: '/about/',
       icon: About
     },

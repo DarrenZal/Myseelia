@@ -8,14 +8,20 @@
   <h1 class="text-xl">Welcome, {$sessionStore.username}!</h1>
 
   <div class="flex flex-col items-start justify-center gap-5">
+    <h2 class="text-lg">ReFi Chat</h2>
     <p>
-      Myseelia is a decentralized knowledge graph for collective intelligence.
+      ReFi Chat is a chatbot that answers questions about Regenerative Finance (ReFi).<br>
     </p>
-    <a class="btn btn-primary" href="/gallery">Try the Myseelia App</a>
+    <a class="btn btn-primary" href="/Chat">Try ReFi Chat</a>
+    <p>
+      Learn about this app 
+      <a class="link link-primary whitespace-nowrap" href="/about">here</a>
+      <br>
+    </p>
   </div>
 
   <div class="flex flex-col items-start justify-center gap-5">
-    <h2 class="text-lg">Device Connection Demo</h2>
+    <h2 class="text-lg">Additional Device Connection</h2>
     <p>
       With Webnative SDK, a user’s account lives only on their connected devices
       — entirely under their control. It’s easy for them to connect as many
@@ -27,3 +33,18 @@
     </a>
   </div>
 </div>
+<style>
+
+  .blue-link {
+  
+  color: blue;
+  
+  text-decoration: underline;
+  
+  cursor: pointer;
+  
+  }
+  
+  </style>
+
+
