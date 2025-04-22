@@ -1,0 +1,1 @@
+import{a as t,B as u}from"./CWPP9cGa.js";function a(o,r="utf8"){const f=u[r];if(!f)throw new Error(`Unsupported encoding "${r}"`);return(r==="utf8"||r==="utf-8")&&globalThis.Buffer!=null&&globalThis.Buffer.from!=null?t(globalThis.Buffer.from(o,"utf-8")):f.decoder.decode(`${f.prefix}${o}`)}export{a as f};
