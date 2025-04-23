@@ -38,10 +38,10 @@ export interface UserManifest { // Added export
 /**
  * Generates keys, creates an initial manifest, pins it to IPFS,
  * stores keys locally, and updates the session state.
- * The 'usernameInput' is currently ignored as identity is based on the generated key.
+ * The 'usernameInput' is used as the initial preferred display name.
  */
 export async function register(usernameInput?: string): Promise<boolean> {
-    console.log('[Register] Function called.'); // Log entry
+    console.log(`[Register] Function called with usernameInput: "${usernameInput}"`); // Log entry with input
 
     try {
         console.log('[Register] Entering try block.');
@@ -72,13 +72,15 @@ export async function register(usernameInput?: string): Promise<boolean> {
         const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Use renamed import
         console.log('[Register] Public key exported.');
 
-        // 5. Create initial empty user manifest
+        // 5. Create initial empty user manifest, including username if provided
         console.log('[Register] Creating initial manifest...');
+        const initialUsername = usernameInput?.trim() || undefined; // Use trimmed input or undefined
         const initialManifest: UserManifest = {
+            username: initialUsername, // Add username to manifest
             publicKey: publicKeyJwk,
             files: {},
         };
-        console.log('[Register] Initial manifest created.');
+        console.log('[Register] Initial manifest created:', initialManifest);
 
         // 6. Pin the initial manifest to IPFS
         console.log('[Register] Pinning initial manifest to IPFS...');
@@ -100,10 +102,12 @@ export async function register(usernameInput?: string): Promise<boolean> {
             console.warn('[Register] Cannot store manifest CID outside browser environment.');
         }
 
-        // 8. Update session store
+        // 8. Update session store, using input username if available
         console.log('[Register] Updating session store...');
+        const sessionUsername = initialUsername || publicKeyJwk.n; // Use input or fallback to key
+        console.log(`[Register] Setting session username to: ${sessionUsername}`);
         sessionStore.set({
-            username: publicKeyJwk.n,
+            username: sessionUsername,
             isAuthenticated: true,
             isLoading: false,
             error: null,
