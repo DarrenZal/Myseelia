@@ -32,7 +32,7 @@
           </p>
         </div>
 
-        <a class="btn btn-primary" href="/backup">Continue</a>
+        <a class="btn btn-primary" href="/">Continue</a> <!-- Link to root -->
       </div>
     </div>
   </div>
