@@ -28,12 +28,16 @@
       <h3 class="text-base">Connect to {appName}</h3>
       <div class="grid grid-flow-row auto-rows-max gap-4 justify-items-center">
         {#if pin}
-          <span
+          <!-- Use a button for the clickable PIN -->
+          <button
+            type="button"
             on:click={copyCode}
+            on:keypress={(e) => { if (e.key === 'Enter' || e.key === ' ') copyCode() }}
             class="btn text-base-100 hover:text-base-100 bg-base-content hover:bg-base-content border-0 btn-lg rounded-full text-deviceCode tracking-[.18em] w-3/4 cursor-pointer font-mono font-light"
+            aria-label="Copy PIN to clipboard"
           >
             {pin}
-          </span>
+          </button>
         {/if}
         <span class="text-sm text-left">
           Enter this code on your connected device.
