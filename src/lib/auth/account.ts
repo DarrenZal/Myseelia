@@ -291,15 +291,17 @@ export async function importCredentialsFromSync(syncDataString: string): Promise
 
         // Import private key using our crypto utility
         const privateKey = await cryptoUtils.importPrivateKey(syncData.privateKeyJwk);
+        console.log("[Import] Private key imported.");
 
-        // Re-derive public key from imported private key JWK
-        // Use the global crypto.subtle directly
-        // NOTE: We need the public key object to store the pair, but importPublicKey expects JWK.
-        // Let's assume the private JWK contains enough info for importPublicKey to work.
-        const publicKey = await cryptoUtils.importPublicKey(syncData.privateKeyJwk); // Use renamed import
+        // Import public key from the same JWK data (assuming it contains public components)
+        console.log("[Import] Importing public key from JWK...");
+        const publicKey = await cryptoUtils.importPublicKey(syncData.privateKeyJwk);
+        console.log("[Import] Public key imported.");
 
          // Store the imported key pair using our crypto utility
+         console.log("[Import] Storing imported key pair...");
          await cryptoUtils.storeKeyPair({ publicKey, privateKey });
+         console.log("[Import] Imported key pair stored.");
 
 
         // Store manifest CID
