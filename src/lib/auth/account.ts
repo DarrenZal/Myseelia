@@ -232,6 +232,7 @@ export async function logout(): Promise<void> {
 // Structure for the data to be encoded in the QR code
 interface SyncData {
     privateKeyJwk: JsonWebKey;
+    publicKeyJwk: JsonWebKey; // Add public key JWK
     manifestCid: string;
 }
 
@@ -256,10 +257,12 @@ export async function exportCredentialsForSync(): Promise<string | null> {
             throw new Error("Cannot export: Manifest CID not found.");
         }
 
-        const privateKeyJwk = await cryptoUtils.exportPrivateKey(keyPair.privateKey); // Use renamed import
+        const privateKeyJwk = await cryptoUtils.exportPrivateKey(keyPair.privateKey);
+        const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Export public key too
 
         const syncData: SyncData = {
             privateKeyJwk,
+            publicKeyJwk, // Include public key
             manifestCid,
         };
 
