@@ -12,31 +12,39 @@ export const initialize = async (): Promise<void> => {
   try {
     // Check for sync data in URL fragment *before* loading account normally
     if (browser.isBrowser() && window.location.hash.startsWith('#sync=')) {
-      console.log('Sync data found in URL fragment.');
+      console.log('[Init] Sync data found in URL fragment.');
       const encodedData = window.location.hash.substring(6); // Get data after #sync=
       try {
+        console.log('[Init] Decoding sync data...');
         const syncDataString = decodeURIComponent(encodedData);
+        console.log('[Init] Decoded sync data string:', syncDataString); // Log decoded data
+        console.log('[Init] Attempting credential import...');
         const importSuccess = await importCredentialsFromSync(syncDataString);
+        console.log('[Init] Import success status:', importSuccess); // Log import result
 
         // Clear the hash from the URL regardless of success/failure to avoid re-import on refresh
+        console.log('[Init] Clearing URL hash...');
         history.replaceState(null, '', window.location.pathname + window.location.search);
+        console.log('[Init] URL hash cleared.');
 
         if (importSuccess) {
           // Redirect to home page after successful import/login
-          console.log('Sync successful, redirecting to home...');
+          console.log('[Init] Sync successful, redirecting to home...');
           await goto('/', { replaceState: true });
           // No need to continue with normal loadAccount below if sync succeeded
           return; // Exit initialize function
         } else {
           // Error handled and notified within importCredentialsFromSync
           // Allow initialization to continue (will likely show logged-out state)
-          console.error('Sync import failed, proceeding with normal initialization.');
+          console.error('[Init] Sync import returned false, proceeding with normal initialization.');
         }
       } catch (e) {
-        console.error('Failed to decode or parse sync data from URL:', e);
+        console.error('[Init] Failed to decode or parse sync data from URL:', e);
         addNotification('Invalid sync data in URL.', 'error');
          // Clear the hash
+         console.log('[Init] Clearing URL hash after error...');
          history.replaceState(null, '', window.location.pathname + window.location.search);
+         console.log('[Init] URL hash cleared after error.');
          // Proceed with normal initialization
       }
     }
