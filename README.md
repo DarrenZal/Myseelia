@@ -1,82 +1,108 @@
-# Myseelia 
+# De-Note
 
-The app is built with:
+De-Note is a decentralized, end-to-end encrypted note-taking application built with SvelteKit. It demonstrates building modern web applications using standard browser APIs for cryptography and IPFS for decentralized storage, eliminating the need for traditional backend servers for user accounts or data persistence.
 
--   [Webnative](https://github.com/webnative-examples/webnative-app-template)
-    -   [SvelteKit](https://kit.svelte.dev/) (powered by [Vite](https://vitejs.dev/) under the hood)
-    -   [TypeScript](https://www.typescriptlang.org/)
-    -   [Tailwind](https://tailwindcss.com/)
-    -   [DaisyUI](https://daisyui.com/)
--   [TerminusDB](https://terminusdb.com/)
--   [Cytoscape](https://js.cytoscape.org/)
--   [Meilisearch](https://www.meilisearch.com/)
+## ✨ Features
 
-## 🚀 Getting Started
+*   **Passwordless Authentication:** Uses cryptographic key pairs (RSA-OAEP + AES-GCM) generated and stored locally in the browser via the Web Crypto API.
+*   **End-to-End Encryption:** Notes are encrypted symmetrically (AES-GCM) before upload. The symmetric key is then encrypted with the user's public RSA key.
+*   **Decentralized Storage:** Encrypted note data and metadata are stored on IPFS via the Pinata pinning service.
+*   **IPFS User Manifest:** A JSON manifest file, also stored on IPFS, links the user's public key to their encrypted file CIDs and necessary decryption metadata (IVs, encrypted keys).
+*   **Device Syncing:** Export account credentials (private key + manifest CID) via a QR code URL to easily log in on another device.
+*   **Markdown Editor:** Create and edit notes using a simple Markdown editor with a live preview toggle.
 
-You can try out the app yourself [here](https://thick-nylon-eagle.fission.app/).
+## 🛠️ Technology Stack
 
-Ready? Let's go.
+*   [SvelteKit](https://kit.svelte.dev/) (powered by [Vite](https://vitejs.dev/))
+*   [TypeScript](https://www.typescriptlang.org/)
+*   [Tailwind CSS](https://tailwindcss.com/)
+*   [DaisyUI](https://daisyui.com/)
+*   [Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API) (Browser Standard)
+*   [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (Browser Standard, via `idb` library)
+*   [IPFS](https://ipfs.tech/) (via [Pinata](https://www.pinata.cloud/))
+*   [marked](https://marked.js.org/) (for Markdown rendering)
+*   [DOMPurify](https://github.com/cure53/DOMPurify) (for sanitizing rendered HTML)
+*   [qrcode](https://github.com/soldair/node-qrcode) (for device sync QR codes)
 
-Prerequiste: ensure you are running Node 16.14 or greater, but _not_ Node 17 (18 is fine though!).
+*(Note: TerminusDB and Meilisearch related code might still be present in some components but is not core to the De-Note functionality described here).*
 
-1. Clone the repository:
+## 🚀 Getting Started Locally
 
+Prerequisites: Ensure you have Node.js (v16.14 or later) and npm installed.
+
+1.  **Clone the repository:**
     ```shell
-    git clone git@github.com:DarrenZal/Myseelia.git
+    git clone https://github.com/DarrenZal/Myseelia.git
+    cd Myseelia
     ```
 
-2. Install the dependencies.
-
+2.  **Install dependencies:**
     ```shell
     npm install
     ```
 
-3. Start the local development server.
+3.  **Set up Pinata:**
+    *   Create an account at [Pinata.cloud](https://www.pinata.cloud/).
+    *   Create an API Key with **Admin** permissions.
+    *   Generate a **JWT** for that Admin API key.
+    *   Create a dedicated **Gateway** (e.g., `your-gateway-name.mypinata.cloud`).
+    *   Create a `.env` file in the project root.
+    *   Add your Pinata credentials to the `.env` file:
+        ```dotenv
+        VITE_PINATA_JWT=YOUR_PINATA_ADMIN_JWT_HERE
+        VITE_PINATA_GATEWAY=YOUR_DEDICATED_GATEWAY_DOMAIN_HERE # e.g., your-gateway-name.mypinata.cloud
+        ```
+        *(Replace the placeholders with your actual JWT and gateway domain)*
 
+4.  **Start the development server:**
     ```shell
     npm run dev
     ```
 
-4. Navigate to `http://localhost:5173` in your web browser.
+5.  Navigate to `http://localhost:5173` (or the port specified) in your browser.
 
+## ☁️ Deploying to Vercel (Recommended)
 
-## 🧨 Deploy
+Vercel is recommended for easy deployment as it handles SPA routing correctly.
 
-Any static hosting platform should be supported.
+1.  **Push to GitHub:** Ensure your latest code is pushed to your GitHub repository.
+2.  **Sign up/Login to Vercel:** Use your GitHub account at [vercel.com](https://vercel.com/).
+3.  **Import Project:** Add a new project and import your `Myseelia` repository from GitHub.
+4.  **Configure Project:**
+    *   Vercel should auto-detect SvelteKit.
+    *   Verify the Build Command (`npm run build`) and Output Directory (`.svelte-kit/output`).
+5.  **Add Environment Variables:**
+    *   Go to Project Settings -> Environment Variables.
+    *   Add `VITE_PINATA_JWT` with your Pinata Admin JWT value.
+    *   Add `VITE_PINATA_GATEWAY` with your Pinata Dedicated Gateway domain (e.g., `your-gateway-name.mypinata.cloud`).
+    *   Ensure they are available for the "Production" environment.
+6.  **Deploy:** Click the "Deploy" button.
 
-The Myseelia app is currently hosted on [Fission App Hosting](https://github.com/webnative-examples/webnative-app-template#fission-app-hosting)
+Vercel will build and deploy your site to a unique URL.
 
-## Fission App Hosting
+## ⚙️ How It Works (High-Level)
 
-A Webnative application can be published to IPFS with the [Fission CLI](https://guide.fission.codes/developers/cli) or the [Fission GitHub publish action](https://github.com/fission-suite/publish-action).
+1.  **Registration:** When a user registers, the browser generates an RSA key pair using the Web Crypto API. The keys are stored locally in IndexedDB. An initial, empty JSON "manifest" file containing the public key is created and uploaded (pinned) to IPFS via Pinata. The IPFS CID (Content Identifier) of this manifest is stored in the browser's localStorage.
+2.  **Login:** On subsequent visits, the app checks for the keys in IndexedDB. If found, the user is considered logged in.
+3.  **Saving Notes:** When a note is saved:
+    *   A new symmetric AES-GCM key is generated.
+    *   The note content (Markdown) is encrypted with this AES key.
+    *   The encrypted content is uploaded to IPFS, yielding a data CID.
+    *   The AES key is encrypted using the user's public RSA key.
+    *   The user's manifest file is fetched from IPFS (using the CID stored in localStorage).
+    *   A new entry is added/updated in the manifest's `files` object, containing the data CID, the encrypted AES key (base64), the IV (base64), and other metadata (filename, type, timestamps).
+    *   The *updated* manifest JSON is uploaded to IPFS, yielding a *new* manifest CID.
+    *   The new manifest CID replaces the old one in localStorage.
+4.  **Loading Notes:** When a note is selected:
+    *   The current manifest is fetched from IPFS.
+    *   The corresponding file entry is found using its path.
+    *   The encrypted note content is fetched from IPFS using its data CID.
+    *   The user's private RSA key is retrieved from IndexedDB.
+    *   The encrypted AES key from the manifest entry is decrypted using the private RSA key.
+    *   The encrypted note content is decrypted using the decrypted AES key and the stored IV.
+    *   The decrypted Markdown content is displayed or rendered.
+5.  **Device Sync:**
+    *   **Export:** The current device exports the private key (as JWK) and the latest manifest CID, encodes them into a JSON string, URL-encodes that string, and generates a QR code representing a URL like `https://<app-url>/#sync=<encoded-data>`.
+    *   **Import:** The new device scans the QR code, opening the URL. The app detects the `#sync=` fragment on load, decodes the data, imports the private key (deriving the public key), stores the key pair in IndexedDB, stores the manifest CID in localStorage, and then attempts to load the account.
 
-**To publish with the Fission CLI:**
-
-1. [Install the CLI](https://guide.fission.codes/developers/installation)
-2. Run `fission setup` to make a Fission account
-3. Run `npm run build` to build the app
-4. Delete `fission.yaml`
-5. Run `fission app register` to register a new Fission app (accept the `./build` directory suggestion for your build directory)
-6. Run `fission app publish` to publish your app to the web
-
-Your app will be available online at the domain assigned by the register command.
-
-**To set up the GitHub publish action:**
-
-1. Register the app with the CLI
-2. Export your machine key with `base64 ~/.config/fission/key/machine_id.ed25519`
-3. Add your machine key as a GH Repository secret named `FISSION_MACHINE_KEY`
-4. Update the `publish.yml` with the name of your registered app
-
-See the [Fission Guide](https://guide.fission.codes/developers/installation) and the publish action README for more details.
-
-
-### Static Build
-
-Export a static build.
-
-```shell
-npm run build
-```
-
-The build outputs the static site to the `build` directory.
+This architecture ensures data is encrypted client-side and only accessible to the user who holds the private key, leveraging IPFS for decentralized, content-addressable storage.

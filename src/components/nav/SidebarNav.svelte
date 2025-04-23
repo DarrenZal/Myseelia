@@ -26,11 +26,7 @@
       href: '/',
       icon: Home
     },
-    {
-      label: 'Chat',
-      href: '/Chat',
-      icon: Chat
-    },
+    // Removed Chat link
     {
       label: 'Notes',
       href: '/notes',
