@@ -296,9 +296,14 @@ export async function importCredentialsFromSync(syncDataString: string): Promise
         const privateKey = await cryptoUtils.importPrivateKey(syncData.privateKeyJwk);
         console.log("[Import] Private key imported.");
 
-        // Import public key from the same JWK data (assuming it contains public components)
-        console.log("[Import] Importing public key from JWK...");
-        const publicKey = await cryptoUtils.importPublicKey(syncData.privateKeyJwk);
+        // Import public key using the dedicated publicKeyJwk from the sync data
+        console.log("[Import] Importing public key from publicKeyJwk...");
+        if (!syncData.publicKeyJwk) {
+             throw new Error("Invalid sync data: Missing public key JWK.");
+        }
+        // Log the public key JWK before attempting import
+        console.log("[Import] Public Key JWK to import:", JSON.stringify(syncData.publicKeyJwk, null, 2));
+        const publicKey = await cryptoUtils.importPublicKey(syncData.publicKeyJwk);
         console.log("[Import] Public key imported.");
 
          // Store the imported key pair using our crypto utility
