@@ -8,13 +8,17 @@
       "./node_modules/@types/"
     ],
     "module": "esnext",
-    "lib": ["es2020"],
-    "target": "es2019",
+    "lib": ["es2020", "dom"], // Add "dom" for browser APIs like fetch
+    "target": "es2020", // Update target to support BigInt literals (needed by dependencies)
     /**
     svelte-preprocess cannot figure out whether you have a value or a type, so tell TypeScript
     to enforce using \`import type\` instead of \`import\` for Types.
+    svelte-preprocess cannot figure out whether you have a value or a type, so tell TypeScript
+    to enforce using \`import type\` instead of \`import\` for Types.
+    (Deprecated: use verbatimModuleSyntax instead)
     */
-    "importsNotUsedAsValues": "error",
+    // "importsNotUsedAsValues": "error", // Deprecated
+    "verbatimModuleSyntax": true, // Try this again after upgrades
     "isolatedModules": true,
     "resolveJsonModule": true,
     /**
@@ -24,17 +28,11 @@
     "sourceMap": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
+    // "baseUrl": ".", // Removed - Use kit.alias in svelte.config.js instead
     "allowJs": true,
-    "checkJs": true,
-    "paths": {
-      "$components/*": ["src/components/*"],
-      "$lib/*": ["src/lib/*"],
-      "$routes/*": ["src/routes/*"],
-      "$src/*": ["src/*"],
-      "$static/*": ["static/*"]
-    }
+    "checkJs": true
+    // "paths": { ... } // Removed - Use kit.alias in svelte.config.js instead
   },
   "extends": "./.svelte-kit/tsconfig.json",
-  "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.ts", "src/**/*.svelte"]
+  "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.ts", "src/**/*.svelte", "vite.config.ts"] // Add vite.config.ts
 }

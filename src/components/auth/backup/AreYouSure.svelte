@@ -1,11 +1,12 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
 
-  import { filesystemStore, sessionStore } from '../../../stores'
-  import { setBackupStatus } from '$lib/auth/backup'
+  // Removed filesystemStore and setBackupStatus imports
+  import { sessionStore } from '../../../stores'
 
   const skipBackup = () => {
-    setBackupStatus($filesystemStore, { created: false })
+    // Removed call to setBackupStatus and $filesystemStore parameter
+    // setBackupStatus($filesystemStore, { created: false })
 
     sessionStore.update(session => ({
       ...session,

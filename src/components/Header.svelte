@@ -20,7 +20,7 @@
 
 <header class="navbar flex bg-base-100 pt-4">
   <div class="lg:hidden">
-    {#if $sessionStore.authed}
+    {#if $sessionStore} <!-- Check if session object exists -->
       <label
         for="sidebar-nav"
         class="drawer-button cursor-pointer -translate-x-2"
@@ -38,7 +38,7 @@
   </div>
 
   <!-- Even if the user is not authed, render this header in the connection flow -->
-  {#if !$sessionStore.authed || $page.url.pathname.match(/register|backup|delegate/)}
+  {#if !$sessionStore || $page.url.pathname.match(/register|backup|delegate/)} <!-- Check if session object !exists -->
     <div
       class="hidden lg:flex flex-1 items-center cursor-pointer gap-3"
       on:click={() => goto('/')}
@@ -51,7 +51,7 @@
   {/if}
 
   <div class="ml-auto">
-    {#if !$sessionStore.loading && !$sessionStore.authed}
+    {#if !$sessionStore} <!-- Check if session object !exists (loading state removed) -->
       <div class="flex-none">
         <a class="btn btn-primary btn-sm !h-10" href="/connect">Connect</a>
       </div>
@@ -67,7 +67,7 @@
       </span>
     {/if} -->
 
-    {#if $sessionStore.authed}
+    {#if $sessionStore} <!-- Check if session object exists -->
       <a href="/settings" class="ml-2 cursor-pointer">
         <Avatar size="small" />
       </a>

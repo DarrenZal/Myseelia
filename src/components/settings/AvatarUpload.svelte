@@ -1,15 +1,19 @@
 <script lang="ts">
-  import { getAvatarFromWNFS, uploadAvatarToWNFS } from '$lib/account-settings'
+  // Import the renamed functions
+  import { getAvatar, uploadAvatar } from '$lib/account-settings'
   import Avatar from '$components/settings/Avatar.svelte'
 
   /**
    * Handle uploads made by interacting with the file input
    */
   const handleFileInput: (file: File) => Promise<void> = async file => {
-    await uploadAvatarToWNFS(file)
+    // Call the renamed upload function
+    await uploadAvatar(file)
 
-    // Refetch avatar and update accountSettingsStore
-    await getAvatarFromWNFS()
+    // Refetch avatar using the renamed function
+    // Note: uploadAvatar already calls getAvatar internally, so this might be redundant,
+    // but keeping it for now ensures the UI updates if uploadAvatar's internal call changes.
+    await getAvatar()
   }
 
   // Handle a file uploaded directly through the file input

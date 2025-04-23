@@ -3,24 +3,23 @@
   import { addNotification } from '$lib/notifications'
   import { appDescription, appImageURL, appName, appURL } from '$lib/app-info'
   import { sessionStore, themeStore } from '../stores'
-  import { errorToMessage } from '$lib/session'
-  import { initialize } from '$lib/init'
+  // import { errorToMessage } from '$lib/session' // errorToMessage might need update for ODD errors
+  // import { initialize } from '$lib/init' // Replaced by loadAccount
+  import { loadAccount } from '$lib/auth/account' // Import new ODD init function
   import Header from '$components/Header.svelte'
   import Notifications from '$components/notifications/Notifications.svelte'
   import SidebarNav from '$components/nav/SidebarNav.svelte'
 
-  sessionStore.subscribe(session => {
-    if (session.error) {
-      const message = errorToMessage(session.error)
-      addNotification(message, 'error')
-    }
-  })
+  // TODO: Update error handling for ODD session errors if needed
+  // sessionStore.subscribe(session => {
+  //   if (session?.error) { // Check if ODD session has an error property or handle errors differently
+  //     const message = errorToMessage(session.error) 
+  //     addNotification(message, 'error')
+  //   }
+  // })
 
-  const init = async () => {
-    await initialize()
-  }
-
-  init()
+  // Call loadAccount directly on component mount or script execution
+  loadAccount()
 </script>
 
 <svelte:head>

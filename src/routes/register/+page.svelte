@@ -5,7 +5,7 @@
   import Welcome from '$components/auth/register/Welcome.svelte'
 </script>
 
-{#if $sessionStore.authed}
+{#if $sessionStore.isAuthenticated} <!-- Check the isAuthenticated property -->
   <Welcome />
 {:else}
   <Register />

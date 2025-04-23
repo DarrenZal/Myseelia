@@ -6,12 +6,21 @@
   import BrandLogo from '$components/icons/BrandLogo.svelte'
   import BrandWordmark from '$components/icons/BrandWordmark.svelte'
   import Home from '$components/icons/Home.svelte'
-  import PhotoGallery from '$components/icons/PhotoGallery.svelte'
+  // Removed PhotoGallery import as it's no longer used
   import Settings from '$components/icons/Settings.svelte'
   import InfoThinIcon from '$components/icons/InfoThinIcon.svelte'
   import Chat from '$components/icons/Chat.svelte'
+  import Share from '$components/icons/Share.svelte'; // Import Share icon
+  import type { ComponentType, SvelteComponent } from 'svelte'; // Import types
 
-  const navItems = [
+  // Define the type for a navigation item
+  interface NavItem {
+    label: string;
+    href: string;
+    icon: ComponentType<SvelteComponent<{ color?: string }>>; // Explicitly type the icon prop
+  }
+
+  const navItems: NavItem[] = [ // Apply the type to the array
     {
       label: 'Home',
       href: '/',
@@ -22,26 +31,12 @@
       href: '/Chat',
       icon: Chat
     },
-    /* {
-      label: 'Profile',
-      href: '/gallery/',
-      icon: PhotoGallery
-    },
     {
-      label: 'Network Map',
-      href: '/explore/',
-      icon: PhotoGallery
+      label: 'Notes',
+      href: '/notes',
+      icon: InfoThinIcon // Placeholder icon
     },
-    {
-      label: 'Geo Map',
-      href: '/geomap/',
-      icon: PhotoGallery
-    }, */
-    // {
-    //   label: 'CTA',
-    //   href: '/cta/',
-    //   icon: PhotoGallery
-    // },
+    // Removed commented out gallery/map/cta links
     {
       label: 'About This App',
       href: '/about/',
@@ -51,6 +46,11 @@
       label: 'Account Settings',
       href: '/settings/',
       icon: Settings
+    },
+    {
+      label: 'Sync Device',
+      href: '/sync',
+      icon: Share
     }
   ]
 
@@ -61,7 +61,7 @@
 </script>
 
 <!-- Only render the nav if the user is authed and not in the connection flow -->
-{#if $sessionStore.authed && !$page.url.pathname.match(/register|backup|delegate/)}
+{#if $sessionStore && !$page.url.pathname.match(/register|backup|delegate/)} <!-- Check if session object exists -->
   <div class="drawer drawer-mobile h-screen">
     <input
       id="sidebar-nav"
@@ -102,7 +102,7 @@
                 href={item.href}
                 on:click={handleCloseDrawer}
               >
-                <svelte:component this={item.icon} />{item.label}
+                <svelte:component this={item.icon} color="currentColor" />{item.label}
               </a>
             </li>
           {/each}

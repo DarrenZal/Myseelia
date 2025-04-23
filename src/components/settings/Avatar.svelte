@@ -1,6 +1,7 @@
 <script lang="ts">
   import { accountSettingsStore, sessionStore } from '$src/stores'
-  import { getAvatarFromWNFS } from '$lib/account-settings'
+  // Import the new getAvatar function
+  import { getAvatar } from '$lib/account-settings'
 
   export let size = 'large'
 
@@ -12,7 +13,8 @@
   const loaderSizeClasses =
     size === 'large' ? 'w-[28px] h-[28px]' : 'w-[16px] h-[16px]'
 
-  getAvatarFromWNFS()
+  // Call the new function
+  getAvatar()
 </script>
 
 {#if $accountSettingsStore.avatar}
@@ -22,7 +24,7 @@
     >
       <span
         class="animate-spin ease-linear rounded-full border-2 border-t-2 border-t-orange-300 border-base-content {loaderSizeClasses}"
-      />
+      ></span> <!-- Added closing tag -->
     </div>
   {:else}
     <img
@@ -35,6 +37,6 @@
   <div
     class="flex items-center justify-center bg-base-content text-base-100 uppercase font-bold rounded-full {sizeClasses}"
   >
-    {$sessionStore.username[0]}
+    {$sessionStore?.username?.[0]} <!-- Add optional chaining -->
   </div>
 {/if}

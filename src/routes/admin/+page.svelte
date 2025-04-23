@@ -1,5 +1,5 @@
 <script>
-  import { writable } from 'svelte/store'
+  import { writable, get } from 'svelte/store' // Add get to existing import
   import TerminusClient from '@terminusdb/terminusdb-client'
 
   // Connect and configure the TerminusClient
@@ -89,13 +89,15 @@
     })
   }
 
-  // function to make an API call to add the schema to the database
-  async function submitSchema() {
-    const response = await fetch('/api/add-schema', {
-      method: 'POST',
-      body: JSON.stringify({ fields: fields.get() }),
-      headers: { 'Content-Type': 'application/json' }
-    })
+// Removed duplicate import line
+
+// function to make an API call to add the schema to the database
+async function submitSchema() {
+  const response = await fetch('/api/add-schema', {
+    method: 'POST',
+    body: JSON.stringify({ fields: get(fields) }), // Use get(fields)
+    headers: { 'Content-Type': 'application/json' }
+  })
     const result = await response.json()
     console.log(result)
   }
@@ -118,20 +120,24 @@
 </form>
 
 <table>
-  <tr>
-    <th>Field Name</th>
-    <th>Field Type</th>
-    <th>Action</th>
-  </tr>
-  {#each $fields as field, index}
+  <thead> <!-- Added thead for header row -->
     <tr>
-      <td>{field.name}</td>
-      <td>{field.type}</td>
-      <td>
-        <button on:click={() => deleteField(index)}>Delete</button>
-      </td>
+      <th>Field Name</th>
+      <th>Field Type</th>
+      <th>Action</th>
     </tr>
-  {/each}
+  </thead>
+  <tbody> <!-- Added tbody wrapper -->
+    {#each $fields as field, index}
+      <tr>
+        <td>{field.name}</td>
+        <td>{field.type}</td>
+        <td>
+          <button on:click={() => deleteField(index)}>Delete</button>
+        </td>
+      </tr>
+    {/each}
+  </tbody> <!-- Added closing tbody tag -->
 </table>
 
 <button on:click={handleSubmit}>Submit Schema</button>

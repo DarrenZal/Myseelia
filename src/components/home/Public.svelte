@@ -9,9 +9,10 @@
   <a class="btn btn-primary" href="/Chat">Try ReFi Chat</a>
   <div class="max-w-[590px]">
     <p class="mb-5">
-      This app uses passwordless login <br />
+      This app uses passwordless login based on keys generated in your browser. Click Register to create a new identity and encrypted filesystem.
       <br />
-      <a class="btn btn-primary btn-sm !h-10" href="/connect">Connect</a>
+      <br />
+      <a class="btn btn-primary btn-sm !h-10" href="/register">Register / Login</a>
     </p>
   </div>
 </div>

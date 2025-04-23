@@ -1,52 +1,62 @@
 <script lang="ts">
+  import { onMount } from 'svelte'; // Keep onMount if needed for other logic, remove if not
   import { appName } from '$lib/app-info'
-  import {
-    isUsernameValid,
-    isUsernameAvailable,
-    register
-  } from '$lib/auth/account'
+  import { register } from '$lib/auth/account'
   import CheckIcon from '$components/icons/CheckIcon.svelte'
   import XIcon from '$components/icons/XIcon.svelte'
   import FilesystemActivity from '$components/common/FilesystemActivity.svelte'
 
   let username: string = ''
-  let usernameValid = true
-  let usernameAvailable = true
   let registrationSuccess = true
-  let checkingUsername = false
+  let isRegistering = false
 
-  let initializingFilesystem = false
-
-  const checkUsername = async (event: Event) => {
+  const handleInput = (event: Event) => {
     const { value } = event.target as HTMLInputElement
-
     username = value
-    checkingUsername = true
-
-    usernameValid = await isUsernameValid(username)
-
-    if (usernameValid) {
-      usernameAvailable = await isUsernameAvailable(username)
-    }
-    checkingUsername = false
   }
 
+  // Original registerUser function
   const registerUser = async () => {
-    if (checkingUsername) {
-      return
+    console.log('[Register.svelte] registerUser called'); // Keep log for now
+    isRegistering = true
+    registrationSuccess = true
+
+    try {
+      registrationSuccess = await register(username)
+    } catch (error) {
+        console.error("Error calling register function:", error);
+        registrationSuccess = false;
+    } finally {
+       isRegistering = false
+    }
+  }
+
+  // Remove onMount listener logic if it was only for debugging the click
+  /*
+  onMount(() => {
+    const registerButton = document.getElementById('register-button');
+    if (registerButton) {
+      registerButton.addEventListener('click', registerUser);
+      console.log('[Register.svelte] Added direct event listener to button.');
+    } else {
+       console.error('[Register.svelte] Could not find register button to attach listener.');
     }
 
-    initializingFilesystem = true
-
-    registrationSuccess = await register(username)
-
-    if (!registrationSuccess) initializingFilesystem = false
-  }
+    // Cleanup listener on component destroy (optional but good practice)
+    return () => {
+      if (registerButton) {
+        registerButton.removeEventListener('click', registerUser);
+        console.log('[Register.svelte] Removed direct event listener from button.');
+      }
+    };
+  });
+  */
 </script>
 
-{#if initializingFilesystem}
+{#if isRegistering}
   <FilesystemActivity activity="Initializing" />
 {:else}
+  <!-- Restore modal wrapper elements -->
   <input type="checkbox" id="register-modal" checked class="modal-toggle" />
   <div class="modal">
     <div class="modal-box w-narrowModal relative text-center">
@@ -58,49 +68,13 @@
           <input
             id="registration"
             type="text"
-            placeholder="Type here"
+            placeholder="Enter a username (optional label)"
             class="input input-bordered focus:outline-none w-full px-3 block"
-            class:input-error={username.length !== 0 &&
-              (!usernameValid || !usernameAvailable)}
-            on:input={checkUsername}
+            on:input={handleInput}
           />
-          {#if checkingUsername}
-            <span
-              class="rounded-lg border-t-2 border-l-2 border-base-content w-4 h-4 block absolute top-4 right-4 animate-spin"
-            />
-          {/if}
-          {#if !(username.length === 0) && usernameAvailable && usernameValid && !checkingUsername}
-            <span class="w-4 h-4 block absolute top-[17px] right-4">
-              <CheckIcon />
-            </span>
-          {/if}
-          {#if !(username.length === 0) && !checkingUsername && !(usernameAvailable && usernameValid)}
-            <span class="w-4 h-4 block absolute top-[17px] right-4">
-              <XIcon />
-            </span>
-          {/if}
         </div>
 
-        {#if !(username.length === 0)}
-          <!-- Status of username: valid, available, etc -->
-          <label for="registration" class="label mt-1">
-            {#if usernameValid && usernameAvailable}
-              <span class="label-text-alt text-green-700 dark:text-green-500">
-                This username is available.
-              </span>
-            {:else if !usernameValid}
-              <span class="label-text-alt text-error">
-                This username is invalid.
-              </span>
-            {:else if !usernameAvailable}
-              <span class="label-text-alt text-error">
-                This username is unavailable.
-              </span>
-            {/if}
-          </label>
-        {/if}
         {#if !registrationSuccess}
-          <!-- Error when registration fails -->
           <label for="registration" class="label mt-1">
             <span class="label-text-alt text-error text-left">
               There was an issue registering your account. Please try again.
@@ -114,7 +88,6 @@
             id="shared-computer"
             class="peer checkbox checkbox-primary border-2 border-base-content hover:border-orange-300 transition-colors duration-250 ease-in-out inline-grid align-bottom"
           />
-          <!-- Warning when "This is a shared computer" is checked -->
           <label
             for="shared-computer"
             class="cursor-pointer ml-1 text-sm grid-inline"
@@ -133,14 +106,15 @@
         </div>
 
         <div class="mt-5">
-          <a class="btn btn-outline" href="/connect">Back</a>
+           <!-- Restore Back button if desired, or leave removed -->
+           <!-- <a class="btn btn-outline" href="/connect">Back</a> -->
+           <!-- Restore original on:click handler -->
           <button
-            class="ml-2 btn btn-primary disabled:opacity-50 disabled:border-neutral disabled:text-neutral"
-            disabled={username.length === 0 ||
-              !usernameValid ||
-              !usernameAvailable ||
-              checkingUsername}
+            id="register-button"
+            type="button"
+            class="ml-2 btn btn-primary"
             on:click={registerUser}
+            disabled={isRegistering}
           >
             Register
           </button>

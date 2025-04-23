@@ -8,7 +8,7 @@
 
   // Reactive statement to update username if sessionStore changes
   $: {
-    if ($sessionStore.username) {
+    if ($sessionStore?.username) { // Add optional chaining
       username = $sessionStore.username;
     } else {
       username = 'guest';
@@ -38,13 +38,14 @@
 
       // Check if there is a result and then process the Text part
       if (response.data.result) {
-        if (response.data.result.Text) {
-          resultText = response.data.result.Text
-          // Check if resultText is an object with a nested Text field
-          if (typeof resultText === 'object' && resultText.Text) {
-            resultText = resultText.Text
-          }
+        // Ensure resultText is always a string after assignment
+        resultText = response.data.result.Text ?? ''; 
+        
+        // Check if resultText was originally an object with a nested Text field
+        if (typeof response.data.result.Text === 'object' && response.data.result.Text?.Text) {
+          resultText = response.data.result.Text.Text ?? '';
         }
+
 
         // Append Details to the result text if available
         if (
@@ -52,7 +53,8 @@
           response.data.result.Details.length > 0
         ) {
           const detailsText = response.data.result.Details.join('')
-          resultText += (resultText ? '<br>' : '') + detailsText
+          // Ensure resultText is not null before appending
+          resultText = (resultText ?? '') + (resultText ? '<br>' : '') + detailsText
         }
       }
 

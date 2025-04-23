@@ -1,5 +1,5 @@
-export const appName = 'ReFiChat'
-export const appDescription = 'Knowledge Network for Collective Intelligence.'
-export const appURL = 'https://webnative.netlify.app'
+export const appName = 'De-Note' // Updated App Name
+export const appDescription = 'A decentralized, encrypted note-taking app using Web Crypto and IPFS.' // Updated Description
+export const appURL = 'https://webnative.netlify.app' // Keep or update URL as needed
 export const appImageURL = `${appURL}/preview.png`
 export const ipfsGatewayUrl = 'runfission.com'

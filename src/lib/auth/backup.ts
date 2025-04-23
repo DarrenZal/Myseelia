@@ -1,29 +1,17 @@
-import * as webnative from 'webnative'
-import type FileSystem from 'webnative/fs/index'
+// src/lib/auth/backup.ts
 
-export type BackupStatus = { created: boolean } | null
+// NOTE: The original functions (setBackupStatus, getBackupStatus) relied on the
+// ODD SDK filesystem (WNFS) which has been removed.
+// Implementing a backup status mechanism with the new crypto/IPFS/manifest
+// system would require a different approach (e.g., storing a flag in the manifest
+// or checking for specific backup-related data on IPFS).
 
-export const setBackupStatus = async (fs: FileSystem, status: BackupStatus): Promise<void> => {
-  const backupStatusPath = webnative.path.file('private', 'backup-status.json')
-  await fs.write(backupStatusPath, JSON.stringify(status))
-  await fs.publish()
-}
+// For now, these functions are removed to resolve runtime errors.
 
-export const getBackupStatus = async (fs: FileSystem): Promise<BackupStatus> => {
-  const backupStatusPath = webnative.path.file('private', 'backup-status.json')
+export type BackupStatus = { created: boolean } | null;
 
-  if (await fs.exists(backupStatusPath)) {
-    const fileContent = await fs.read(backupStatusPath)
+// Removed setBackupStatus function
 
-    if (typeof fileContent === 'string') {
-      return JSON.parse(fileContent) as BackupStatus
-    }
+// Removed getBackupStatus function
 
-    console.warn('Unable to load backup status')
-
-    return { created: false }
-  } else {
-    return { created: false }
-  }
-}
-
+// You might want to re-implement backup status checks based on your new architecture later.

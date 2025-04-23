@@ -1,201 +1,420 @@
-import * as webnative from 'webnative'
-import type FileSystem from 'webnative/fs/index'
+// src/lib/auth/account.ts
+import { get } from 'svelte/store'; // Import the 'get' function
+import * as cryptoUtils from '$lib/crypto'; // Use $lib alias and rename to avoid conflict
+import * as ipfs from '$lib/ipfs';   // Use $lib alias
+import { sessionStore } from '../../stores'; // Keep sessionStore
+import * as browser from '$lib/browser'; // Keep browser utils for localStorage
+import { addNotification } from '$lib/notifications'; // Import addNotification
 
-import { asyncDebounce } from '$lib/utils'
-import { filesystemStore, sessionStore } from '../../stores'
-import { getBackupStatus } from '$lib/auth/backup'
-import { ACCOUNT_SETTINGS_DIR } from '$lib/account-settings'
-import { AREAS } from '$routes/gallery/stores'
-import { GALLERY_DIRS } from '$routes/gallery/lib/gallery'
-import * as browser from '$lib/browser'
+// --- Constants ---
+const MANIFEST_CID_STORAGE_KEY = 'myseelia-manifest-cid';
 
-export const isUsernameValid = async (username: string): Promise<boolean> => {
-  console.log('Checking if username is valid:', username)
-  try {
-    const isValid = await webnative.account.isUsernameValid(username)
-    console.log('Username validity check result:', isValid)
-    return isValid
-  } catch (error) {
-    console.error('Error checking username validity:', error)
-    return false
-  }
+// --- Types ---
+// Define structure for file metadata within the manifest
+export interface ManifestFileEntry { // Added export
+    cid: string;        // CID of encrypted file content
+    iv: string;         // Base64 encoded IV for AES-GCM
+    key: string;        // Base64 encoded AES key encrypted with RSA public key
+    // Add other metadata like original filename, type, size if needed
+    name: string;
+    type: string;
+    size: number;
+    ctime: number;
+    mtime: number;
 }
 
-const debouncedIsUsernameAvailable = asyncDebounce(
-  webnative.account.isUsernameAvailable,
-  300
-)
-
-export const isUsernameAvailable = async (
-  username: string
-): Promise<boolean> => {
-  console.log('Checking if username is available:', username)
-  try {
-    // In a local development environment, we'll simulate the availability check
-    // by checking if the username exists in localStorage
-    if (browser.isBrowser()) {
-      const isAvailable = browser.isUsernameAvailable(username)
-      console.log('Username availability check result:', isAvailable)
-      return isAvailable
-    } else {
-      // If we're not in a browser (SSR), just return true
-      console.log('Not in browser environment, returning true for username availability')
-      return true
-    }
-  } catch (error) {
-    console.error('Error checking username availability:', error)
-    return false
-  }
+// Define the structure of the user manifest stored on IPFS
+export interface UserManifest { // Added export
+    publicKey: JsonWebKey; // User's public RSA key (JWK format)
+    files: {
+        // Paths are keys, e.g., "gallery/public/image.jpg"
+        [filePath: string]: ManifestFileEntry;
+    };
 }
 
-export const register = async (username: string): Promise<boolean> => {
-  console.log('Starting registration process for username:', username)
-  
-  try {
-    if (browser.isBrowser()) {
-      console.log('Generating cryptographic keys for user...')
-      // Generate a key pair using Web Crypto API
-      const keyPair = await browser.generateKeyPair()
-      
-      if (keyPair) {
-        // Export the public key
-        const publicKeyBase64 = await browser.exportPublicKey(keyPair.publicKey)
-        
-        if (publicKeyBase64) {
-          console.log('Keys generated successfully')
-          
-          // Store the username and public key
-          browser.addRegisteredUser(username)
-          browser.storePublicKey(username, publicKeyBase64)
-        } else {
-          console.error('Failed to export public key')
-        }
-      } else {
-        console.error('Failed to generate key pair')
-      }
-    } else {
-      console.log('Not in browser environment, skipping key generation')
-    }
-    
-    const success = true
-    console.log('Registration result:', success)
+// --- Registration ---
 
-    if (!success) {
-      console.error('Registration failed')
-      return success
-    }
+/**
+ * Generates keys, creates an initial manifest, pins it to IPFS,
+ * stores keys locally, and updates the session state.
+ * The 'usernameInput' is currently ignored as identity is based on the generated key.
+ */
+export async function register(usernameInput?: string): Promise<boolean> {
+    console.log('[Register] Function called.'); // Log entry
 
-    console.log('Registration successful, bootstrapping root filesystem...')
     try {
-      const fs = await webnative.bootstrapRootFileSystem()
-      console.log('Root filesystem bootstrapped')
-      filesystemStore.set(fs)
+        console.log('[Register] Entering try block.');
+        // 1. Check if keys already exist
+        console.log('[Register] Checking for existing keys...');
+        let keyPair = await cryptoUtils.retrieveKeyPair(); // Use renamed import
+        if (keyPair) {
+            console.warn('[Register] Keys already exist. Attempting login...');
+            await loadAccount();
+            const session = get(sessionStore);
+            console.log('[Register] Login attempt finished. isAuthenticated:', session.isAuthenticated);
+            return session.isAuthenticated;
+        }
+        console.log('[Register] No existing keys found.');
 
-      // TODO Remove if only public and private directories are needed
-      console.log('Initializing filesystem...')
-      await initializeFilesystem(fs)
-      console.log('Filesystem initialized')
-    } catch (fsError) {
-      console.error('Error bootstrapping filesystem:', fsError)
-      console.log('Creating a simple mock filesystem for local development')
-      // We'll still update the session to simulate a successful login
+        // 2. Generate new RSA key pair
+        console.log('[Register] Generating RSA key pair...');
+        keyPair = await cryptoUtils.generateRSAKeyPair(); // Use renamed import
+        console.log('[Register] RSA key pair generated.');
+
+        // 3. Store key pair locally (IndexedDB)
+        console.log('[Register] Storing key pair...');
+        await cryptoUtils.storeKeyPair(keyPair); // Use renamed import
+        console.log('[Register] Key pair stored.');
+
+        // 4. Export public key
+        console.log('[Register] Exporting public key...');
+        const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Use renamed import
+        console.log('[Register] Public key exported.');
+
+        // 5. Create initial empty user manifest
+        console.log('[Register] Creating initial manifest...');
+        const initialManifest: UserManifest = {
+            publicKey: publicKeyJwk,
+            files: {},
+        };
+        console.log('[Register] Initial manifest created.');
+
+        // 6. Pin the initial manifest to IPFS
+        console.log('[Register] Pinning initial manifest to IPFS...');
+        const manifestCid = await ipfs.pinJsonToIpfs(initialManifest, { name: 'myseelia-user-manifest-initial' });
+        console.log('[Register] Pinning attempt finished. CID result:', manifestCid); // Log result immediately
+        if (!manifestCid) {
+            console.error('[Register] Failed to pin initial manifest to IPFS.');
+            await cryptoUtils.clearKeyPair(); // Use renamed import
+            return false;
+        }
+        console.log('[Register] Initial manifest pinned successfully. CID:', manifestCid);
+
+        // 7. Store manifest CID locally (localStorage)
+        console.log('[Register] Storing manifest CID locally...');
+        if (browser.isBrowser()) {
+            localStorage.setItem(MANIFEST_CID_STORAGE_KEY, manifestCid);
+            console.log('[Register] Manifest CID stored.');
+        } else {
+            console.warn('[Register] Cannot store manifest CID outside browser environment.');
+        }
+
+        // 8. Update session store
+        console.log('[Register] Updating session store...');
+        sessionStore.set({
+            username: publicKeyJwk.n,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+            backupCreated: null, // Backup status needs separate implementation
+        });
+        console.log('Registration successful, session updated.');
+
+        // Note: Filesystem initialization (creating dirs) is now handled implicitly
+        // by adding entries to the manifest's 'files' object.
+
+        return true;
+
+    } catch (error) {
+        console.error('Error during registration:', error);
+        // Ensure partial state is cleaned up
+        await cryptoUtils.clearKeyPair(); // Use renamed import
+        if (browser.isBrowser()) {
+            localStorage.removeItem(MANIFEST_CID_STORAGE_KEY);
+        }
+        sessionStore.set({
+            username: null, isAuthenticated: false, isLoading: false, error: 'Registration failed.', backupCreated: null
+        });
+        return false;
     }
+}
 
-    console.log('Updating session store...')
-    sessionStore.update(session => ({
-      ...session,
-      username,
-      authed: true
-    }))
-    console.log('Session store updated')
+// --- Account Loading ---
 
-    return success
-  } catch (error) {
-    console.error('Error during registration process:', error)
-    return false
-  }
+/**
+ * Loads account by retrieving local keys and fetching the manifest from IPFS.
+ */
+export async function loadAccount(): Promise<void> {
+    console.log('Attempting to load account (Web Crypto)...');
+
+    try {
+        // 1. Retrieve key pair from IndexedDB
+        const keyPair = await cryptoUtils.retrieveKeyPair(); // Use renamed import
+
+        if (!keyPair) {
+            console.log('No local key pair found. User is not logged in.');
+            sessionStore.set({
+                username: null, isAuthenticated: false, isLoading: false, error: null, backupCreated: null
+            });
+            // Ensure manifest CID is also cleared if keys are missing
+             if (browser.isBrowser()) {
+                localStorage.removeItem(MANIFEST_CID_STORAGE_KEY);
+            }
+            return;
+        }
+
+        // 2. Retrieve manifest CID from localStorage
+        let manifestCid: string | null = null;
+        if (browser.isBrowser()) {
+            manifestCid = localStorage.getItem(MANIFEST_CID_STORAGE_KEY);
+        }
+
+        if (!manifestCid) {
+            console.error('Keys found, but manifest CID is missing from local storage. Cannot load account state.');
+            // This indicates a corrupted state. Clear keys? Ask user to re-register?
+            await cryptoUtils.clearKeyPair(); // Use renamed import
+            sessionStore.set({
+                username: null, isAuthenticated: false, isLoading: false, error: 'Account state corrupted (missing manifest CID). Please register again.', backupCreated: null
+            });
+            return;
+        }
+
+        // 3. Fetch manifest from IPFS (Consider adding retries or better error handling)
+        // We don't strictly *need* the manifest content just to log in,
+        // but it's good practice to ensure it's accessible.
+        // The actual manifest content will be fetched by gallery/file operations later.
+        console.log(`Manifest CID found: ${manifestCid}. Verifying access...`);
+        // Optional: Fetch manifest here to confirm it exists, but don't store it globally yet.
+        // const manifest = await ipfs.fetchJsonFromIpfs(manifestCid);
+        // if (!manifest) {
+        //    console.error(`Failed to fetch manifest from IPFS using CID: ${manifestCid}`);
+        //    sessionStore.set({ username: null, isAuthenticated: false, isLoading: false, error: 'Failed to load account data from storage.', backupCreated: null });
+        //    return;
+        // }
+        // console.log("Manifest fetched successfully during load.");
+
+
+        // 4. Update session store (Login successful)
+        const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Use renamed import
+        sessionStore.set({
+            username: publicKeyJwk.n, // Use part of public key as identifier
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+            backupCreated: null, // Backup status needs separate implementation
+        });
+        console.log('Account loaded successfully.');
+
+    } catch (error) {
+        console.error('Error loading account:', error);
+        sessionStore.set({
+            username: null, isAuthenticated: false, isLoading: false, error: 'Failed to load account.', backupCreated: null
+        });
+         // Clear potentially corrupted state
+        await cryptoUtils.clearKeyPair(); // Use renamed import
+        if (browser.isBrowser()) {
+            localStorage.removeItem(MANIFEST_CID_STORAGE_KEY);
+        }
+    }
+}
+
+// --- Logout ---
+
+/**
+ * Clears local keys and session state.
+ */
+export async function logout(): Promise<void> {
+    console.log('Logging out...');
+    await cryptoUtils.clearKeyPair(); // Use renamed import
+    if (browser.isBrowser()) {
+        localStorage.removeItem(MANIFEST_CID_STORAGE_KEY);
+    }
+    sessionStore.set({
+        username: null, isAuthenticated: false, isLoading: false, error: null, backupCreated: null
+    });
+    // Clear other stores if necessary (e.g., filesystemStore if it was adapted)
+    // filesystemStore.set(null);
+    console.log('User logged out.');
+}
+
+// --- Device Syncing ---
+
+// Structure for the data to be encoded in the QR code
+interface SyncData {
+    privateKeyJwk: JsonWebKey;
+    manifestCid: string;
 }
 
 /**
- * Create additional directories and files needed by the app
- *
- * @param fs FileSystem
+ * Exports the user's private key (JWK) and current manifest CID as a JSON string.
+ * Requires the user to be logged in.
+ * @returns JSON string containing sync data, or null on failure.
  */
-const initializeFilesystem = async (fs: FileSystem): Promise<void> => {
-  try {
-    console.log('Creating public gallery directory...')
-    await fs.mkdir(webnative.path.directory(...GALLERY_DIRS[AREAS.PUBLIC]))
-    console.log('Public gallery directory created')
-    
-    console.log('Creating private gallery directory...')
-    await fs.mkdir(webnative.path.directory(...GALLERY_DIRS[AREAS.PRIVATE]))
-    console.log('Private gallery directory created')
-    
-    console.log('Creating account settings directory...')
-    await fs.mkdir(webnative.path.directory(...ACCOUNT_SETTINGS_DIR))
-    console.log('Account settings directory created')
-  } catch (error) {
-    console.error('Error during filesystem initialization:', error)
-    throw error
-  }
+export async function exportCredentialsForSync(): Promise<string | null> {
+    console.log("Exporting credentials for sync...");
+    try {
+        const keyPair = await cryptoUtils.retrieveKeyPair(); // Use renamed import
+        if (!keyPair) {
+            throw new Error("Cannot export: User not logged in.");
+        }
+
+        let manifestCid: string | null = null;
+        if (browser.isBrowser()) {
+            manifestCid = localStorage.getItem(MANIFEST_CID_STORAGE_KEY);
+        }
+        if (!manifestCid) {
+            throw new Error("Cannot export: Manifest CID not found.");
+        }
+
+        const privateKeyJwk = await cryptoUtils.exportPrivateKey(keyPair.privateKey); // Use renamed import
+
+        const syncData: SyncData = {
+            privateKeyJwk,
+            manifestCid,
+        };
+
+        console.log("Credentials exported successfully.");
+        return JSON.stringify(syncData);
+
+    } catch (error) {
+        console.error("Error exporting credentials:", error);
+        addNotification("Failed to prepare sync data.", "error"); // Use imported function
+        return null;
+    }
 }
 
-export const loadAccount = async (username: string): Promise<void> => {
-  console.log('Loading account for username:', username)
-  
-  try {
-    console.log('Checking data root...')
-    await checkDataRoot(username)
-    console.log('Data root check completed')
+/**
+ * Imports credentials from a sync data string (e.g., scanned from QR code).
+ * Stores the key pair and manifest CID, then attempts to load the account.
+ * WARNING: This will overwrite any existing keys/manifest CID on the current device.
+ * @param syncDataString JSON string containing SyncData.
+ * @returns boolean indicating success.
+ */
+export async function importCredentialsFromSync(syncDataString: string): Promise<boolean> {
+    console.log("Importing credentials from sync data...");
+    try {
+        const syncData: SyncData = JSON.parse(syncDataString);
 
-    console.log('Loading root filesystem...')
-    const fs = await webnative.loadRootFileSystem()
-    console.log('Root filesystem loaded')
-    filesystemStore.set(fs)
+        if (!syncData.privateKeyJwk || !syncData.manifestCid) {
+            throw new Error("Invalid sync data format.");
+        }
 
-    console.log('Getting backup status...')
-    const backupStatus = await getBackupStatus(fs)
-    console.log('Backup status:', backupStatus)
+        // Import private key using our crypto utility
+        const privateKey = await cryptoUtils.importPrivateKey(syncData.privateKeyJwk);
 
-    console.log('Updating session store...')
-    sessionStore.update(session => ({
-      ...session,
-      username,
-      authed: true,
-      backupCreated: backupStatus.created
-    }))
-    console.log('Session store updated')
-  } catch (error) {
-    console.error('Error during account loading:', error)
-  }
+        // Re-derive public key from imported private key JWK
+        // Use the global crypto.subtle directly
+        // NOTE: We need the public key object to store the pair, but importPublicKey expects JWK.
+        // Let's assume the private JWK contains enough info for importPublicKey to work.
+        const publicKey = await cryptoUtils.importPublicKey(syncData.privateKeyJwk); // Use renamed import
+
+         // Store the imported key pair using our crypto utility
+         await cryptoUtils.storeKeyPair({ publicKey, privateKey });
+
+
+        // Store manifest CID
+        if (browser.isBrowser()) {
+            localStorage.setItem(MANIFEST_CID_STORAGE_KEY, syncData.manifestCid);
+            console.log("Imported manifest CID stored.");
+        } else {
+             console.warn("Cannot store imported manifest CID outside browser.");
+             // Decide if this is a critical failure for non-browser envs
+        }
+
+        // Attempt to load the account with the imported credentials
+        await loadAccount();
+
+        // Check if loading was successful
+        const session = get(sessionStore);
+        if (session.isAuthenticated) {
+            console.log("Credentials imported and account loaded successfully.");
+            addNotification("Device synced successfully!", "success");
+            return true;
+        } else {
+            throw new Error("Account loading failed after importing credentials.");
+        }
+
+    } catch (error) {
+        console.error("Error importing credentials:", error);
+        addNotification(`Sync failed: ${error.message}`, "error"); // Use imported function
+        // Clear potentially corrupted state
+        await cryptoUtils.clearKeyPair(); // Use renamed import
+        if (browser.isBrowser()) {
+            localStorage.removeItem(MANIFEST_CID_STORAGE_KEY);
+        }
+         sessionStore.set({
+            username: null, isAuthenticated: false, isLoading: false, error: 'Sync failed.', backupCreated: null
+        });
+        return false;
+    }
 }
 
-const checkDataRoot = async (username: string): Promise<void> => {
-  console.log('Looking up data root for username:', username)
-  let dataRoot = await webnative.dataRoot.lookup(username)
-  console.log('Initial data root lookup result:', dataRoot ? 'found' : 'not found')
 
-  if (dataRoot) return
+// --- Helper Functions (Example: Get current manifest) ---
 
-  console.log('Data root not found, starting retry process...')
-  return new Promise((resolve) => {
-    const maxRetries = 20
-    let attempt = 0
+/**
+ * Retrieves the current user manifest from IPFS.
+ * Requires the user to be logged in (keys available).
+ * @returns The UserManifest object or null if not logged in or fetch fails.
+ */
+export async function getCurrentManifest(): Promise<UserManifest | null> {
+    const keyPair = await cryptoUtils.retrieveKeyPair(); // Use renamed import
+    if (!keyPair) {
+        console.log("Not logged in, cannot get manifest.");
+        return null;
+    }
 
-    const dataRootInterval = setInterval(async () => {
-      console.warn(`Could not fetch filesystem data root. Retrying (${attempt + 1}/${maxRetries})`)
+    let manifestCid: string | null = null;
+    if (browser.isBrowser()) {
+        manifestCid = localStorage.getItem(MANIFEST_CID_STORAGE_KEY);
+    }
 
-      dataRoot = await webnative.dataRoot.lookup(username)
-      console.log(`Retry ${attempt + 1} result:`, dataRoot ? 'found' : 'not found')
+    if (!manifestCid) {
+        console.error("Logged in, but manifest CID missing.");
+        return null; // Or attempt recovery?
+    }
 
-      if (!dataRoot && attempt < maxRetries) {
-        attempt++
-        return
-      }
+    const manifest = await ipfs.fetchJsonFromIpfs(manifestCid);
 
-      console.log(`Retry process completed. Data root ${dataRoot ? 'found' : 'not found'} after ${attempt + 1} attempts`)
-      clearInterval(dataRootInterval)
-      resolve()
-    }, 500)
-  })
+    // Basic type check for the fetched manifest
+    if (manifest && typeof manifest === 'object' && 'publicKey' in manifest && 'files' in manifest) {
+        return manifest as UserManifest;
+    } else {
+        console.error("Fetched manifest data is invalid or null.");
+        return null;
+    }
 }
+
+/**
+ * Updates the user manifest on IPFS.
+ * Requires the user to be logged in.
+ * @param updatedManifest The new UserManifest object to store.
+ * @returns The new CID of the manifest, or null on failure.
+ */
+export async function updateManifest(updatedManifest: UserManifest): Promise<string | null> {
+    const keyPair = await cryptoUtils.retrieveKeyPair(); // Use renamed import
+    if (!keyPair) {
+        console.error("Not logged in, cannot update manifest.");
+        return null;
+    }
+
+     // Optional: Validate that the public key in the manifest matches the current user's key
+     const currentPublicKey = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Use renamed import
+     if (JSON.stringify(updatedManifest.publicKey) !== JSON.stringify(currentPublicKey)) {
+         console.error("Manifest update rejected: Public key mismatch.");
+         return null;
+     }
+
+    const newCid = await ipfs.pinJsonToIpfs(updatedManifest, { name: 'myseelia-user-manifest-update' });
+
+    if (newCid) {
+        console.log("Manifest updated on IPFS. New CID:", newCid);
+        if (browser.isBrowser()) {
+            localStorage.setItem(MANIFEST_CID_STORAGE_KEY, newCid);
+        }
+        // TODO: Consider unpinning the *old* manifest CID via Pinata API if desired.
+    } else {
+        console.error("Failed to pin updated manifest.");
+    }
+
+    return newCid;
+}
+
+
+// --- ODD SDK Replacements / Removals ---
+// - isUsernameValid: No longer needed, identity is key-based.
+// - isUsernameAvailable: No longer needed.
+// - initializeFilesystem: Directory creation is implicit via manifest updates.
+// - getProgram: No longer needed.
+// - debouncedIsUsernameAvailable: No longer needed.
+// - Backup status (getBackupStatus): Needs reimplementation based on new structure (e.g., checking manifest history or specific backup flags).

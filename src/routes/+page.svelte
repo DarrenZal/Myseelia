@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { sessionStore } from '../stores'
   import Authed from '$components/home/Authed.svelte'
   import Public from '$components/home/Public.svelte'
+  import { sessionStore } from '$src/stores'
 </script>
 
-{#if $sessionStore?.authed}
+{#if $sessionStore.isAuthenticated} <!-- Check the isAuthenticated property -->
   <Authed />
 {:else}
   <Public />
