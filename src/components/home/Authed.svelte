@@ -12,7 +12,7 @@
   <div class="flex flex-col items-start justify-center gap-5">
     <h2 class="text-lg">Manage Your Notes</h2>
     <p>
-      Create, edit, and view your encrypted notes. Your data is secured using keys stored only in your browser and backed up via IPFS.
+      Create, edit, and view your encrypted notes. Your cryptographic keys are stored securely in this browser, while your encrypted note data is backed up via IPFS.
     </p>
      <a class="btn btn-primary" href="/notes">
       Go to Notes

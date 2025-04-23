@@ -29,8 +29,8 @@
         // 3. Construct the full URL with fragment
         const fullSyncUrl = `${baseUrl}/#sync=${encodedSyncData}`;
         console.log("Attempting to generate QR code for URL:", fullSyncUrl); // Log the exact URL
-        // 4. Generate QR code for the URL
-        qrCodeDataUrl = await QRCode.toDataURL(fullSyncUrl, { errorCorrectionLevel: 'L', scale: 6 });
+        // 4. Generate QR code for the URL with reduced scale
+        qrCodeDataUrl = await QRCode.toDataURL(fullSyncUrl, { errorCorrectionLevel: 'L', scale: 4 }); // Reduced scale from 6 to 4
       } catch (err) {
         console.error('QR code generation failed:', err);
         errorMessage = 'Could not generate QR code.';
