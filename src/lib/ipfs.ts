@@ -2,7 +2,24 @@
 import * as uint8arrays from 'uint8arrays';
 
 const PINATA_API_BASE = 'https://api.pinata.cloud';
-const IPFS_GATEWAY = 'https://gateway.pinata.cloud/ipfs/'; // Or use a preferred public gateway
+
+// Function to construct the gateway URL from environment variable or default
+function getIpfsGatewayUrl(): string {
+  const customGateway = import.meta.env.VITE_PINATA_GATEWAY;
+  if (customGateway) {
+    // Ensure it starts with https:// and ends with /ipfs/
+    const prefix = customGateway.startsWith('https://') ? '' : 'https://';
+    const suffix = customGateway.endsWith('/ipfs/') ? '' : '/ipfs/';
+    const fullUrl = `${prefix}${customGateway}${suffix}`;
+    console.log('Using dedicated Pinata Gateway:', fullUrl);
+    return fullUrl;
+  } else {
+    console.warn('VITE_PINATA_GATEWAY not set, using public gateway.');
+    return 'https://gateway.pinata.cloud/ipfs/'; // Default public gateway
+  }
+}
+
+const IPFS_GATEWAY_URL = getIpfsGatewayUrl(); // Get the URL once
 
 // Function to get the Pinata JWT from environment variables
 function getPinataJWT(): string | null {
@@ -118,12 +135,12 @@ export async function pinJsonToIpfs(jsonData: object, pinataMetadata?: { name?: 
  * @returns A Uint8Array of the data, or null on failure.
  */
 export async function fetchFromIpfs(cid: string): Promise<Uint8Array | null> {
-  console.log(`Fetching data from IPFS for CID: ${cid}...`);
+  console.log(`Fetching data from IPFS for CID: ${cid} via ${IPFS_GATEWAY_URL}...`); // Log which gateway is used
   try {
-    const response = await fetch(`${IPFS_GATEWAY}${cid}`);
+    const response = await fetch(`${IPFS_GATEWAY_URL}${cid}`); // Use the configured gateway URL
 
     if (!response.ok) {
-      throw new Error(`IPFS gateway error (${response.status}): ${response.statusText}`);
+      throw new Error(`IPFS gateway error (${response.status}) at ${IPFS_GATEWAY_URL}${cid}: ${response.statusText}`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
