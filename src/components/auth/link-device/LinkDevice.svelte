@@ -43,8 +43,8 @@
         >
           <span
             class="rounded-lg border-t-2 border-l-2 border-slate-600 dark:border-slate-50 w-4 h-4 block animate-spin"
-          />
-          Waiting for a response...
+          ></span> <!-- Added closing tag -->
+          Waiting for connection...
         </div>
       </div>
       <div>
