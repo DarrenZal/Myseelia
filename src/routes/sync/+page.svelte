@@ -28,7 +28,7 @@
         const encodedSyncData = encodeURIComponent(syncDataString);
         // 3. Construct the full URL with fragment
         const fullSyncUrl = `${baseUrl}/#sync=${encodedSyncData}`;
-        console.log("Generating QR code for URL:", fullSyncUrl);
+        console.log("Attempting to generate QR code for URL:", fullSyncUrl); // Log the exact URL
         // 4. Generate QR code for the URL
         qrCodeDataUrl = await QRCode.toDataURL(fullSyncUrl, { errorCorrectionLevel: 'L', scale: 6 });
       } catch (err) {
