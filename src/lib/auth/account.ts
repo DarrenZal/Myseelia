@@ -25,9 +25,10 @@ export interface ManifestFileEntry { // Added export
 
 // Define the structure of the user manifest stored on IPFS
 export interface UserManifest { // Added export
+    username?: string; // Optional user-chosen display name
     publicKey: JsonWebKey; // User's public RSA key (JWK format)
     files: {
-        // Paths are keys, e.g., "gallery/public/image.jpg"
+        // Paths are keys, e.g., "notes/my-note.md"
         [filePath: string]: ManifestFileEntry;
     };
 }
@@ -183,11 +184,16 @@ export async function loadAccount(): Promise<void> {
         // }
         // console.log("Manifest fetched successfully during load.");
 
+        // 4. Fetch the manifest to get the preferred username (if set)
+        const manifest = await getCurrentManifest(); // Use the helper which handles checks
+        const preferredUsername = manifest?.username; // Get username from manifest if it exists
 
-        // 4. Update session store (Login successful)
-        const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey); // Use renamed import
+        // 5. Update session store (Login successful)
+        const publicKeyJwk = await cryptoUtils.exportPublicKey(keyPair.publicKey);
+        const finalUsername = preferredUsername || publicKeyJwk.n; // Use preferred name or fallback
+        console.log(`Using username: ${finalUsername} (Preferred: ${preferredUsername ? 'Yes' : 'No'})`);
         sessionStore.set({
-            username: publicKeyJwk.n, // Use part of public key as identifier
+            username: finalUsername,
             isAuthenticated: true,
             isLoading: false,
             error: null,
