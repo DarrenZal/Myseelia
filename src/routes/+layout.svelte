@@ -9,6 +9,11 @@
   import Header from '$components/Header.svelte'
   import Notifications from '$components/notifications/Notifications.svelte'
   import SidebarNav from '$components/nav/SidebarNav.svelte'
+  import { onMount } from 'svelte'; // Import onMount
+  import * as browser from '$lib/browser'; // Import browser utils
+  import { importCredentialsFromSync } from '$lib/auth/account'; // Import sync function
+  import { goto } from '$app/navigation'; // Import goto
+  // Removed duplicate addNotification import
 
   // TODO: Update error handling for ODD session errors if needed
   // sessionStore.subscribe(session => {
@@ -19,7 +24,50 @@
   // })
 
   // Call loadAccount directly on component mount or script execution
-  loadAccount()
+  loadAccount(); // Keep normal loadAccount call
+
+  // Add onMount hook to check for sync data after mount
+  onMount(() => {
+    if (browser.isBrowser() && window.location.hash.startsWith('#sync=')) {
+      console.log('[Layout] Sync data found in URL fragment on mount.');
+      const encodedData = window.location.hash.substring(6);
+      try {
+        const syncDataString = decodeURIComponent(encodedData);
+        console.log('[Layout] Decoded sync data string:', syncDataString);
+        // Use IIFE to handle async import within onMount
+        (async () => {
+            console.log('[Layout] Attempting credential import...');
+            const importSuccess = await importCredentialsFromSync(syncDataString);
+            console.log('[Layout] Import success status:', importSuccess);
+
+            // Clear the hash from the URL
+            console.log('[Layout] Clearing URL hash...');
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+            console.log('[Layout] URL hash cleared.');
+
+            if (importSuccess) {
+              // Reload the page or redirect to ensure all components reflect the new state
+              console.log('[Layout] Sync successful, reloading page...');
+              window.location.reload(); // Simple reload might be sufficient
+              // await goto('/', { replaceState: true, invalidateAll: true }); // Alternative: force reload/rerun load functions
+            } else {
+              console.error('[Layout] Sync import returned false.');
+              // Error notification handled in importCredentialsFromSync
+            }
+        })();
+      } catch (e) {
+        console.error('[Layout] Failed to decode or parse sync data from URL:', e);
+        addNotification('Invalid sync data in URL.', 'error');
+         // Clear the hash
+         console.log('[Layout] Clearing URL hash after error...');
+         history.replaceState(null, '', window.location.pathname + window.location.search);
+         console.log('[Layout] URL hash cleared after error.');
+      }
+    } else {
+        console.log('[Layout] No sync data found in URL fragment on mount.');
+    }
+  });
+
 </script>
 
 <svelte:head>
